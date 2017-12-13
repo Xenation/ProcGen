@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 namespace ProcGen {
 	public class BasicTerrainGen : MonoBehaviour {
@@ -13,6 +14,7 @@ namespace ProcGen {
 		public int divX;
 		[Range(1, 300)]
 		public int divY;
+		public Material terrainMat;
 
 		[Header("Terrain Perlin")]
 		public int seed = 0;
@@ -31,27 +33,17 @@ namespace ProcGen {
 		[Header("Water")]
 		public GameObject water;
 		public float waterLevel = .2f;
-
-		private Vector2 prevSize;
-		private int prevDivX;
-		private int prevDivY;
-		private int prevSeed;
-		private float prevPerlinScale;
-		private float prevPerlinPower;
-		private float prevPerlinAmplitude;
-		private int prevNbTowns;
-		private int prevRaysY;
-		private float prevMinTownRadius;
-		private float prevMaxTownRadius;
-		private float prevWaterLevel;
+		public float shore = .1f;
 
 		private Mesh mesh;
-		private List<GameObject> objs = new List<GameObject>();
+		private MeshRenderer meshRenderer;
+		private Material runtimeMat;
+		private bool regenerate = true;
 		private List<Town> towns = new List<Town>();
 
 		private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
-		private void Start() {
+		private void Awake() {
 			if (filter == null) {
 				filter = GetComponent<MeshFilter>();
 			}
@@ -59,79 +51,49 @@ namespace ProcGen {
 				meshCol = GetComponent<MeshCollider>();
 			}
 			mesh = filter.mesh;
+			meshRenderer = GetComponent<MeshRenderer>();
+			runtimeMat = new Material(terrainMat);
+			meshRenderer.material = runtimeMat;
+		}
+
+		private void Start() {
 			if (randomSeed) {
 				seed = Random.Range(0, int.MaxValue);
 			}
+			Generate();
 		}
 
-		public void Update() {
-			if (CheckChange()) {
-				sw.Reset();
-				sw.Start();
-
-				Random.InitState(seed);
-				GeneratePlane(size, divX, divY);
-				UpdateWater();
-				GenerateTerrain();
-				meshCol.sharedMesh = mesh;
-				GenerateTowns();
-
-				sw.Stop();
-				Debug.Log("Generation Time: " + sw.ElapsedMilliseconds + "ms");
+		private void Update() {
+			if (regenerate) {
+				Generate();
+				regenerate = false;
 			}
+		}
+
+		private void OnValidate() {
+			if (!EditorApplication.isPlaying) return;
+
+			regenerate = true;
+		}
+
+		private void Generate() {
+			sw.Reset();
+			sw.Start();
+
+			Random.InitState(seed);
+			GeneratePlane(size, divX, divY);
+			UpdateWater();
+			GenerateTerrain();
+			meshCol.sharedMesh = mesh;
+			GenerateTowns();
+
+			sw.Stop();
+			Debug.Log("Generation Time: " + sw.ElapsedMilliseconds + "ms");
 		}
 
 		private void UpdateWater() {
 			water.transform.position = new Vector3(water.transform.position.x, waterLevel, water.transform.position.z);
-		}
-
-		private bool CheckChange() {
-			bool hasChanged = false;
-			if (prevSize != size) {
-				hasChanged = true;
-				prevSize = size;
-			}
-			if (prevDivX != divX) {
-				hasChanged = true;
-				prevDivX = divX;
-			}
-			if (prevDivY != divY) {
-				hasChanged = true;
-				prevDivY = divY;
-			}
-			if (prevSeed != seed) {
-				hasChanged = true;
-				prevSeed = seed;
-			}
-			if (prevPerlinScale != perlinScale) {
-				hasChanged = true;
-				prevPerlinScale = perlinScale;
-			}
-			if (prevPerlinPower != perlinPower) {
-				hasChanged = true;
-				prevPerlinPower = perlinPower;
-			}
-			if (prevPerlinAmplitude != perlinAmplitude) {
-				hasChanged = true;
-				prevPerlinAmplitude = perlinAmplitude;
-			}
-			if (prevNbTowns != nbTowns) {
-				hasChanged = true;
-				prevNbTowns = nbTowns;
-			}
-			if (prevMinTownRadius != minTownRadius) {
-				hasChanged = true;
-				prevMinTownRadius = minTownRadius;
-			}
-			if (prevMaxTownRadius != maxTownRadius) {
-				hasChanged = true;
-				prevMaxTownRadius = maxTownRadius;
-			}
-			if (prevWaterLevel != waterLevel) {
-				hasChanged = true;
-				prevWaterLevel = waterLevel;
-			}
-			return hasChanged;
+			runtimeMat.SetFloat("_WaterLevel", waterLevel);
 		}
 
 		public void GenerateTowns() {
@@ -141,7 +103,7 @@ namespace ProcGen {
 			while (towns.Count < nbTowns) {
 				ray.origin = transform.position + new Vector3(Random.Range(transform.position.x, transform.position.x + size.x), 100f, Random.Range(transform.position.z, transform.position.z + size.y));
 				float radius = Random.Range(minTownRadius, maxTownRadius);
-				if (meshCol.Raycast(ray, out hit, 1000f) && hit.point.y > waterLevel && Vector3.Dot(hit.normal, Vector3.up) > .9f && TownIsFarEnough(hit.point, radius)) {
+				if (meshCol.Raycast(ray, out hit, 1000f) && hit.point.y > waterLevel + shore && Vector3.Dot(hit.normal, Vector3.up) > .9f && TownIsFarEnough(hit.point, radius)) {
 					Town town = Instantiate(townPrefab, hit.point, Quaternion.identity, transform);
 					town.radius = radius;
 					town.GenerateBuildings(this, buildingPrefab);

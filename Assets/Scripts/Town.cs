@@ -17,13 +17,13 @@ namespace ProcGen {
 			for (int y = 0; y <= maxBuildings; y++) {
 				for (int x = 0; x <= maxBuildings; x++) {
 					ray.origin = transform.position + new Vector3((x / (float) maxBuildings) * (radius * 2) - radius, 100f, (y / (float) maxBuildings) * (radius * 2) - radius);
-					if (gen.meshCol.Raycast(ray, out hit, 1000f) && hit.point.y > gen.waterLevel && Vector3.Dot(hit.normal, Vector3.up) > .9f) {
+					if (gen.meshCol.Raycast(ray, out hit, 1000f) && hit.point.y > gen.waterLevel + gen.shore && Vector3.Dot(hit.normal, Vector3.up) > .9f) {
 						float distance = Vector3.Distance(hit.point, transform.position);
 						if (distance > radius) continue;
 						GameObject go = Instantiate(buildingPrefab, hit.point, Quaternion.identity, transform);
 						Vector3 scale = go.transform.localScale;
 						scale.y *= heightCurve.Evaluate(distance / radius) * radius;
-						scale.y += Random.Range(-1f, 1f);
+						scale.y += Random.Range(0f, 1f);
 						go.transform.localScale = scale;
 						go.transform.position += Vector3.up * (scale.y / 2);
 						buildings.Add(go);
