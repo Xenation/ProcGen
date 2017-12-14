@@ -35,6 +35,12 @@ namespace ProcGen {
 		public float waterLevel = .2f;
 		public float shore = .1f;
 
+		[Header("Roads")]
+		public int centerRoadsCount = 4;
+		public float minRoadsLength = 1f;
+		public float maxRoadsLength = 5f;
+		public float centerRoadsWidth = .3f;
+
 		private Mesh mesh;
 		private MeshRenderer meshRenderer;
 		private Material runtimeMat;
@@ -81,7 +87,7 @@ namespace ProcGen {
 			sw.Start();
 
 			Random.InitState(seed);
-			GeneratePlane(size, divX, divY);
+			mesh.GeneratePlane(size, divX, divY);
 			UpdateWater();
 			GenerateTerrain();
 			meshCol.sharedMesh = mesh;
@@ -107,6 +113,7 @@ namespace ProcGen {
 					Town town = Instantiate(townPrefab, hit.point, Quaternion.identity, transform);
 					town.radius = radius;
 					town.GenerateBuildings(this, buildingPrefab);
+					town.GenerateRoads(this);
 					towns.Add(town);
 				}
 			}
@@ -137,46 +144,6 @@ namespace ProcGen {
 			}
 			mesh.vertices = verts;
 			mesh.RecalculateNormals();
-		}
-
-		public void GeneratePlane(Vector2 size, int divX, int divY) {
-			if (divX < 1) {
-				divX = 1;
-			}
-			if (divY < 1) {
-				divY = 1;
-			}
-			// Vertices
-			Vector3[] verts = new Vector3[(divX + 1) * (divY + 1)];
-			int index = 0;
-			for (int y = 0; y <= divY; y++) { // vert loop
-				for (int x = 0; x <= divX; x++) {
-					verts[index++] = new Vector3(size.x / divX * x, 0, size.y / divY * y);
-				}
-			}
-
-			// Indices
-			index = 0;
-			int[] indices = new int[divX * divY * 6];
-			for (int y = 0; y < divY; y++) { // quad loop
-				for (int x = 0; x < divX; x++) {
-					int bl = divX * y + y + x;
-					int br = bl + 1;
-					int tl = divX * (y + 1) + (y + 1) + x;
-					int tr = tl + 1;
-
-					indices[index++] = bl;
-					indices[index++] = tl;
-					indices[index++] = tr;
-
-					indices[index++] = bl;
-					indices[index++] = tr;
-					indices[index++] = br;
-				}
-			}
-			mesh.Clear();
-			mesh.vertices = verts;
-			mesh.SetIndices(indices, MeshTopology.Triangles, 0);
 		}
 
 	}

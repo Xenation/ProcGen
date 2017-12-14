@@ -7,8 +7,10 @@ namespace ProcGen {
 		public float radius;
 		public AnimationCurve heightCurve;
 		public float density;
+		public TownTopology topology;
 
 		private List<GameObject> buildings = new List<GameObject>();
+		public Junction centralJunction;
 
 		public void GenerateBuildings(BasicTerrainGen gen, GameObject buildingPrefab) {
 			Ray ray = new Ray(Vector3.zero, Vector3.down);
@@ -37,6 +39,11 @@ namespace ProcGen {
 				Destroy(buildings[i]);
 			}
 			buildings.Clear();
+		}
+
+		public void GenerateRoads(BasicTerrainGen gen) {
+			centralJunction = Junction.CreateNew(transform);
+			centralJunction.GenerateRoads(this, gen.centerRoadsCount, gen.minRoadsLength, gen.maxRoadsLength, gen.centerRoadsWidth);
 		}
 
 	}
