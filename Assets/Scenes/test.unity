@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -144,7 +144,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 167548888}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 9.025965, y: 17.759436, z: -5.6281404}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -162,6 +162,7 @@ GameObject:
   - component: {fileID: 188794948}
   - component: {fileID: 188794949}
   - component: {fileID: 188794945}
+  - component: {fileID: 188794950}
   m_Layer: 8
   m_Name: Terrain
   m_TagString: Untagged
@@ -175,7 +176,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 188794944}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5bb6285e867bf4246a9a3d416c69c47b, type: 3}
   m_Name: 
@@ -191,6 +192,7 @@ MonoBehaviour:
   perlinScale: 0.05
   perlinPower: 5
   perlinAmplitude: 50
+  perlinOctaves: 1
   buildingPrefab: {fileID: 1373286501096326, guid: 4fcd9962671617c4da44903d8027fa73,
     type: 2}
   townPrefab: {fileID: 114402103051264492, guid: 20b68862355746842a30bef35e7e146a,
@@ -201,6 +203,10 @@ MonoBehaviour:
   water: {fileID: 941039147}
   waterLevel: 0.2
   shore: 0.1
+  centerRoadsCount: 4
+  minRoadsLength: 1
+  maxRoadsLength: 5
+  centerRoadsWidth: 0.3
 --- !u!33 &188794946
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -267,6 +273,36 @@ MeshCollider:
   m_InflateMesh: 0
   m_SkinWidth: 0.01
   m_Mesh: {fileID: 0}
+--- !u!114 &188794950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 188794944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9981c9411830b744fa0bc708d110dc05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrainMat: {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
+  seed: 111
+  randomSeed: 0
+  chunksX: 10
+  chunksZ: 10
+  chunkSize: {x: 50, y: 50}
+  chunkQuadsX: 25
+  chunkQuadsZ: 25
+  noiseType: 0
+  frequency: 0.01
+  amplitude: 50
+  octaveCount: 8
+  lacunarity: 1.841
+  gain: 0.5
+  offsetX: 0
+  offsetZ: 0
+  water: {fileID: 941039147}
+  waterLevel: 0.2
+  shore: 0.1
 --- !u!1 &605477062
 GameObject:
   m_ObjectHideFlags: 0
@@ -499,8 +535,8 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 941039147}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 100, y: 0.2, z: 100}
-  m_LocalScale: {x: 20, y: 1, z: 20}
+  m_LocalPosition: {x: 250, y: 0.2, z: 250}
+  m_LocalScale: {x: 50, y: 1, z: 50}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 3

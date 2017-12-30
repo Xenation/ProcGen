@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace ProcGen {
 	public static class MathUtils {
@@ -19,6 +19,28 @@ namespace ProcGen {
 				intersection = Vector3.zero;
 				return false;
 			}
+		}
+
+		public delegate float NoiseFunction(float x, float y, int octaves, float lacunarity, float gain);
+
+		public static float Perlin(float x, float y, int octaves, float lacunarity, float gain) {
+			float octAmp = 1f;
+			float octFreq = 1f;
+			float output = 0f;
+			for (int i = 0; i < octaves; i++) {
+				output += (Mathf.PerlinNoise(x * octFreq, y * octFreq) - .5f) * octAmp;
+				octFreq *= lacunarity;
+				octAmp *= gain;
+			}
+			return output;
+		}
+
+		public static float PerlinAbs(float x, float y, int octaves, float lacunarity, float gain) {
+			return Mathf.Abs(Perlin(x, y, octaves, lacunarity, gain));
+		}
+
+		public static float PerlinOneMinusAbs(float x, float y, int octaves, float lacunarity, float gain) {
+			return 1f - Mathf.Abs(Perlin(x, y, octaves, lacunarity, gain));
 		}
 
 	}

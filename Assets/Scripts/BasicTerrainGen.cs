@@ -22,6 +22,7 @@ namespace ProcGen {
 		public float perlinScale = 0.5f;
 		public float perlinPower = 3f;
 		public float perlinAmplitude = 2f;
+		public int perlinOctaves = 1;
 
 		[Header("Towns")]
 		public GameObject buildingPrefab;
