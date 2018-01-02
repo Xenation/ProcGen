@@ -287,13 +287,16 @@ MonoBehaviour:
   terrainMat: {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
   seed: 111
   randomSeed: 0
-  chunksX: 10
-  chunksZ: 10
+  chunksX: 50
+  chunksZ: 50
   chunkSize: {x: 50, y: 50}
-  chunkQuadsX: 25
-  chunkQuadsZ: 25
+  chunkQuadsX: 100
+  chunkQuadsZ: 100
+  lodQuadsDivider: 2
+  lodChunkDistance: 2
+  maxLOD: 20
   noiseType: 0
-  frequency: 0.01
+  frequency: 0.0075
   amplitude: 50
   octaveCount: 8
   lacunarity: 1.841
@@ -301,8 +304,9 @@ MonoBehaviour:
   offsetX: 0
   offsetZ: 0
   water: {fileID: 941039147}
-  waterLevel: 0.2
+  waterLevel: 5
   shore: 0.1
+  mountainessFrequency: 0.02
 --- !u!1 &605477062
 GameObject:
   m_ObjectHideFlags: 0

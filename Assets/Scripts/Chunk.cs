@@ -18,9 +18,12 @@ namespace ProcGen {
 		[Header("Mesh")]
 		public Vector2 size;
 		[Range(1, 250)]
-		public int quadsX;
+		public int maxQuadsX;
 		[Range(1, 250)]
-		public int quadsZ;
+		public int maxQuadsZ;
+		private int quadsX;
+		private int quadsZ;
+		public int lod = 0;
 		private MeshFilter filter;
 		private Mesh mesh;
 		private MeshCollider meshCol;
@@ -40,8 +43,8 @@ namespace ProcGen {
 			Chunk chk = go.AddComponent<Chunk>();
 			chk.generator = generator;
 			chk.size = size;
-			chk.quadsX = quadsX;
-			chk.quadsZ = quadsZ;
+			chk.maxQuadsX = quadsX;
+			chk.maxQuadsZ = quadsZ;
 			chk.ChunkPos = chunkPos;
 			chk.Init();
 			return chk;
@@ -84,14 +87,17 @@ namespace ProcGen {
 		}
 
 		public void Generate() {
+			quadsX = (lod == 0) ? maxQuadsX : (int) (maxQuadsX / (generator.lodQuadsDivider * lod));
+			quadsZ = (lod == 0) ? maxQuadsZ : (int) (maxQuadsZ / (generator.lodQuadsDivider * lod));
 			mesh.GeneratePlane(size, quadsX, quadsZ);
-			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, generator.offsetX, generator.offsetZ);
+			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, generator.offsetX, generator.offsetZ, generator.mountainessFrequency);
 			meshCol.sharedMesh = mesh;
 		}
 
-		private void GenerateTerrain(MathUtils.NoiseFunction noise, float frequency, float amplitude, int octaveCount, float lacunarity, float gain, float offsetX, float offsetZ) {
+		private void GenerateTerrain(MathUtils.NoiseFunction noise, float frequency, float amplitude, int octaveCount, float lacunarity, float gain, float offsetX, float offsetZ, float mountFreq) {
 			Vector3[] verts = mesh.vertices;
 			for (int vertIndex = 0; vertIndex < verts.Length; vertIndex++) {
+				float mountainess = Mathf.PerlinNoise((verts[vertIndex].x + transform.position.x) * mountFreq + offsetX, (verts[vertIndex].z + transform.position.z) * mountFreq + offsetZ);
 				verts[vertIndex].y = noise((verts[vertIndex].x + transform.position.x) * frequency + offsetX, (verts[vertIndex].z + transform.position.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude;
 			}
 
@@ -101,6 +107,7 @@ namespace ProcGen {
 		}
 
 		public void FixEdgeSeams() { // TODO corner seams, change normals of adjacents and avoid adjacent to recalculate on top
+			return; // TODO handle LOD
 			Vector3[] normals = mesh.normals;
 			Vector3[] adjNormals;
 

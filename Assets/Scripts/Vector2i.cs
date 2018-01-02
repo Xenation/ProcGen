@@ -31,6 +31,10 @@ namespace ProcGen {
 			this.y = y;
 		}
 
+		public static float Distance(Vector2i a, Vector2i b) {
+			return Mathf.Sqrt(Mathf.Pow(b.x - a.x, 2) + Mathf.Pow(b.y - a.y, 2));
+		}
+
 		public static Vector2i operator +(Vector2i v1, Vector2i v2) {
 			return new Vector2i(v1.x + v2.x, v1.y + v2.y);
 		}
@@ -41,6 +45,14 @@ namespace ProcGen {
 
 		public static Vector2i operator *(Vector2i v, int a) {
 			return new Vector2i(v.x * a, v.y * a);
+		}
+
+		public static bool operator ==(Vector2i a, Vector2i b) {
+			return a.x == b.x && a.y == b.y;
+		}
+
+		public static bool operator !=(Vector2i a, Vector2i b) {
+			return a.x != b.x || a.y != b.y;
 		}
 
 	}

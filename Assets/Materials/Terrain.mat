@@ -60,7 +60,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BumpScale: 1
-    - _CliffMult: 2
+    - _CliffMult: 4
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -75,11 +75,11 @@ Material:
     - _SandFade: 0.25
     - _SmoothnessTextureChannel: 0
     - _SnowFade: 4
-    - _SnowLevel: 12
+    - _SnowLevel: 25
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
-    - _WaterLevel: 0.2
+    - _WaterLevel: 5
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 0.216648, g: 0.472, b: 0.2606742, a: 1}

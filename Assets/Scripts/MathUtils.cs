@@ -26,8 +26,10 @@ namespace ProcGen {
 		public static float Perlin(float x, float y, int octaves, float lacunarity, float gain) {
 			float octAmp = 1f;
 			float octFreq = 1f;
-			float output = 0f;
-			for (int i = 0; i < octaves; i++) {
+			float output = Mathf.PerlinNoise(x * octFreq, y * octFreq) * octAmp;
+			octFreq *= lacunarity;
+			octAmp *= gain;
+			for (int i = 0; i < octaves - 1; i++) {
 				output += (Mathf.PerlinNoise(x * octFreq, y * octFreq) - .5f) * octAmp;
 				octFreq *= lacunarity;
 				octAmp *= gain;

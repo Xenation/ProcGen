@@ -25,6 +25,9 @@ namespace ProcGen {
 		public int chunkQuadsX;
 		[Range(1, 250)]
 		public int chunkQuadsZ;
+		public float lodQuadsDivider = 2f;
+		public int lodChunkDistance = 1;
+		public int maxLOD = 20;
 		private Dictionary<Vector2i, Chunk> chunks = new Dictionary<Vector2i, Chunk>();
 
 		[Header("Noise")]
@@ -45,6 +48,9 @@ namespace ProcGen {
 		public float waterLevel = .2f;
 		public float shore = .1f;
 
+		[Header("Biomes")]
+		public float mountainessFrequency = .05f;
+
 		private void Start() {
 			if (randomSeed) {
 				seed = Random.Range(0, int.MaxValue);
@@ -57,6 +63,7 @@ namespace ProcGen {
 				Generate();
 				regenerate = false;
 			}
+			TrackCamera();
 		}
 
 		private void OnValidate() {
@@ -65,14 +72,40 @@ namespace ProcGen {
 			regenerate = true;
 		}
 
+		private Vector2i camChunkPos;
+		private void TrackCamera() {
+			if (SceneView.currentDrawingSceneView != null) {
+				Vector3 camPos = SceneView.currentDrawingSceneView.camera.transform.position;
+				Vector2i prevCamChunkPos = camChunkPos;
+				camChunkPos = new Vector2i((int) (camPos.x / chunkSize.x), (int) (camPos.z / chunkSize.y));
+				if (prevCamChunkPos != camChunkPos) {
+					UpdateLOD();
+				}
+			}
+		}
+
+		private void UpdateLOD() {
+			foreach (Chunk chk in chunks.Values) {
+				int prevLOD = chk.lod;
+				chk.lod = (int) (Vector2i.Distance(chk.ChunkPos, camChunkPos) / lodChunkDistance);
+				if (chk.lod > maxLOD) {
+					chk.lod = maxLOD;
+				}
+				if (prevLOD != chk.lod) {
+					chk.Generate();
+				}
+			}
+		}
+
 		private void Generate() {
 			InitChunks();
 			Random.InitState(seed);
-			offsetX = Random.Range(-100000f, 100000f);
-			offsetZ = Random.Range(-100000f, 100000f);
+			offsetX = Random.Range(-10000f, 10000f);
+			offsetZ = Random.Range(-10000f, 10000f);
 			UpdateWater();
 			ResetNoiseFunc();
-			GenerateChunks();
+			//GenerateChunks();
+			UpdateLOD();
 		}
 
 		private void ResetNoiseFunc() {
