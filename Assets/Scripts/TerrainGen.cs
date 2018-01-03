@@ -25,7 +25,7 @@ namespace ProcGen {
 		public int chunkQuadsX;
 		[Range(1, 250)]
 		public int chunkQuadsZ;
-		public float lodQuadsDivider = 2f;
+		public int lodQuadsDivider = 2;
 		public int lodChunkDistance = 1;
 		public int maxLOD = 20;
 		private Dictionary<Vector2i, Chunk> chunks = new Dictionary<Vector2i, Chunk>();
@@ -85,6 +85,7 @@ namespace ProcGen {
 		}
 
 		private void UpdateLOD() {
+			// Generation Pass
 			foreach (Chunk chk in chunks.Values) {
 				int prevLOD = chk.lod;
 				chk.lod = (int) (Vector2i.Distance(chk.ChunkPos, camChunkPos) / lodChunkDistance);
@@ -94,6 +95,10 @@ namespace ProcGen {
 				if (prevLOD != chk.lod) {
 					chk.Generate();
 				}
+			}
+			// Edge Seams Pass
+			foreach (Chunk chk in chunks.Values) {
+				chk.FixEdgeSeams();
 			}
 		}
 

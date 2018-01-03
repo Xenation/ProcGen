@@ -290,8 +290,8 @@ MonoBehaviour:
   chunksX: 50
   chunksZ: 50
   chunkSize: {x: 50, y: 50}
-  chunkQuadsX: 100
-  chunkQuadsZ: 100
+  chunkQuadsX: 128
+  chunkQuadsZ: 128
   lodQuadsDivider: 2
   lodChunkDistance: 2
   maxLOD: 20
