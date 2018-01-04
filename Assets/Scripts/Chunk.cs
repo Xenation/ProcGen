@@ -14,23 +14,21 @@ namespace ProcGen {
 			set {
 				_chkPos = value;
 				transform.position = WorldPosition();
+				cachedPos = transform.position;
 			}
 		}
 
 		[Header("Mesh")]
 		public Vector2 size;
-		[Range(1, 250)]
-		public int maxQuadsX;
-		[Range(1, 250)]
-		public int maxQuadsZ;
 		private int quadsX;
 		private int quadsZ;
 		public int lodIndex = -1;
 		private MeshFilter filter;
 		private Mesh mesh;
+		private PreparedMesh prepMesh;
 		private MeshCollider meshCol;
 		private MeshRenderer meshRenderer;
-		public bool MeshModified { get; private set; }
+		public bool MeshAltered { get; private set; }
 
 		private TerrainGen generator;
 
@@ -41,15 +39,15 @@ namespace ProcGen {
 		private Chunk left;
 
 		private Dictionary<Orientation, bool> edgeSeamsFixed = new Dictionary<Orientation, bool>();
+		private Vector3 cachedPos;
+		public bool meshRegenerated;
 
-		public static Chunk Create(TerrainGen generator, Vector2i chunkPos, Vector2 size, int quadsX, int quadsZ) {
+		public static Chunk Create(TerrainGen generator, Vector2i chunkPos, Vector2 size) {
 			GameObject go = new GameObject("Chunk");
 			go.transform.SetParent(generator.transform);
 			Chunk chk = go.AddComponent<Chunk>();
 			chk.generator = generator;
 			chk.size = size;
-			chk.maxQuadsX = quadsX;
-			chk.maxQuadsZ = quadsZ;
 			chk.ChunkPos = chunkPos;
 			chk.Init();
 			return chk;
@@ -59,6 +57,7 @@ namespace ProcGen {
 			filter = GetComponent<MeshFilter>();
 			meshCol = GetComponent<MeshCollider>();
 			mesh = filter.mesh;
+			prepMesh = mesh.CreatePreparedMesh();
 			meshRenderer = GetComponent<MeshRenderer>();
 			meshRenderer.material = new Material(generator.terrainMat);
 			InitEdgeSeamsFixed();
@@ -120,38 +119,44 @@ namespace ProcGen {
 			if (quadsX == 0 || quadsZ == 0) {
 				Debug.Log("Generating quadsX=" + quadsX + "quadsZ=" + quadsZ);
 			}
-			mesh.GeneratePlane(size, quadsX, quadsZ);
+			prepMesh.GeneratePlane(size, quadsX, quadsZ);
 			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, generator.offsetX, generator.offsetZ, generator.continentsFrequency);
-			meshCol.sharedMesh = mesh;
 			UpdateFixedSeamIndicator(Orientation.North, false);
 			UpdateFixedSeamIndicator(Orientation.East, false);
 			UpdateFixedSeamIndicator(Orientation.South, false);
 			UpdateFixedSeamIndicator(Orientation.West, false);
 		}
 
+		public void Finalise() {
+			prepMesh.Apply();
+			if (meshRegenerated) {
+				meshCol.sharedMesh = mesh;
+			}
+		}
+
 		private void GenerateTerrain(MathUtils.NoiseFunction noise, float frequency, float amplitude, int octaveCount, float lacunarity, float gain, float offsetX, float offsetZ, float mountFreq) {
-			Vector3[] verts = mesh.vertices;
+			Vector3[] verts = prepMesh.vertices;
 			for (int vertIndex = 0; vertIndex < verts.Length; vertIndex++) {
-				float mountainess = Mathf.PerlinNoise((verts[vertIndex].x + transform.position.x) * mountFreq + offsetX, (verts[vertIndex].z + transform.position.z) * mountFreq + offsetZ);
+				float mountainess = Mathf.PerlinNoise((verts[vertIndex].x + cachedPos.x) * mountFreq + offsetX, (verts[vertIndex].z + cachedPos.z) * mountFreq + offsetZ);
 				float ampModifier = generator.continentValueToAmplification.Evaluate(mountainess);
-				verts[vertIndex].y = noise((verts[vertIndex].x + transform.position.x) * frequency + offsetX, (verts[vertIndex].z + transform.position.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude * ampModifier;
+				verts[vertIndex].y = noise((verts[vertIndex].x + cachedPos.x) * frequency + offsetX, (verts[vertIndex].z + cachedPos.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude * ampModifier;
 			}
 
-			mesh.vertices = verts;
-			mesh.RecalculateNormals();
-			mesh.RecalculateBounds();
-			MeshModified = false;
+			prepMesh.vertices = verts;
+			prepMesh.RecalculateNormals();
+			prepMesh.RecalculateBounds();
+			MeshAltered = false;
 		}
 
 		public void FixEdgeSeams() { // TODO corner seams, change normals of adjacents and avoid adjacent to recalculate on top
-			Vector3[] normals = mesh.normals;
-			Vector3[] verts = mesh.vertices;
+			Vector3[] normals = prepMesh.normals;
+			Vector3[] verts = prepMesh.vertices;
 			Vector3[] adjNormals;
 			Vector3[] adjVerts;
 
 			// Front Edge
 			if (front != null && !edgeSeamsFixed[Orientation.North]) {
-				adjNormals = front.mesh.normals;
+				adjNormals = front.prepMesh.normals;
 				if (front.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.North, quadsX, quadsZ, normals, verts, front.quadsX, front.quadsZ, adjNormals, false, 0);
 				} else {
@@ -160,19 +165,20 @@ namespace ProcGen {
 						FixEdgeSeam(Orientation.North, quadsX, quadsZ, normals, verts, front.quadsX, front.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {
 						lodDiff = 1f / lodDiff;
-						adjVerts = front.mesh.vertices;
+						adjVerts = front.prepMesh.vertices;
 						FixEdgeSeam(Orientation.South, front.quadsX, front.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, (int) lodDiff);
-						front.mesh.vertices = adjVerts;
-						front.MeshModified = true;
+						front.prepMesh.vertices = adjVerts;
+						front.MeshAltered = true;
 					}
+					MeshAltered = true;
 				}
-				front.mesh.normals = adjNormals;
+				front.prepMesh.normals = adjNormals;
 				UpdateFixedSeamIndicator(Orientation.North, true);
 			}
 
 			// Back Edge
 			if (back != null && !edgeSeamsFixed[Orientation.South]) {
-				adjNormals = back.mesh.normals;
+				adjNormals = back.prepMesh.normals;
 				if (back.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.South, quadsX, quadsZ, normals, verts, back.quadsX, back.quadsZ, adjNormals, false, 0);
 				} else {
@@ -181,19 +187,20 @@ namespace ProcGen {
 						FixEdgeSeam(Orientation.South, quadsX, quadsZ, normals, verts, back.quadsX, back.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {
 						lodDiff = 1f / lodDiff;
-						adjVerts = back.mesh.vertices;
+						adjVerts = back.prepMesh.vertices;
 						FixEdgeSeam(Orientation.North, back.quadsX, back.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, (int) lodDiff);
-						back.mesh.vertices = adjVerts;
-						back.MeshModified = true;
+						back.prepMesh.vertices = adjVerts;
+						back.MeshAltered = true;
 					}
+					MeshAltered = true;
 				}
-				back.mesh.normals = adjNormals;
+				back.prepMesh.normals = adjNormals;
 				UpdateFixedSeamIndicator(Orientation.South, true);
 			}
 
 			// Right Edge
 			if (right != null && !edgeSeamsFixed[Orientation.East]) {
-				adjNormals = right.mesh.normals;
+				adjNormals = right.prepMesh.normals;
 				if (right.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.East, quadsX, quadsZ, normals, verts, right.quadsX, right.quadsZ, adjNormals, false, 0);
 				} else {
@@ -202,19 +209,20 @@ namespace ProcGen {
 						FixEdgeSeam(Orientation.East, quadsX, quadsZ, normals, verts, right.quadsX, right.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {
 						lodDiff = 1f / lodDiff;
-						adjVerts = right.mesh.vertices;
+						adjVerts = right.prepMesh.vertices;
 						FixEdgeSeam(Orientation.West, right.quadsX, right.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, (int) lodDiff);
-						right.mesh.vertices = adjVerts;
-						right.MeshModified = true;
+						right.prepMesh.vertices = adjVerts;
+						right.MeshAltered = true;
 					}
+					MeshAltered = true;
 				}
-				right.mesh.normals = adjNormals;
+				right.prepMesh.normals = adjNormals;
 				UpdateFixedSeamIndicator(Orientation.East, true);
 			}
 
 			// Left Edge
 			if (left != null && !edgeSeamsFixed[Orientation.West]) {
-				adjNormals = left.mesh.normals;
+				adjNormals = left.prepMesh.normals;
 				if (left.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.West, quadsX, quadsZ, normals, verts, left.quadsX, left.quadsZ, adjNormals, false, 0);
 				} else {
@@ -223,19 +231,19 @@ namespace ProcGen {
 						FixEdgeSeam(Orientation.West, quadsX, quadsZ, normals, verts, left.quadsX, left.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {
 						lodDiff = 1f / lodDiff;
-						adjVerts = left.mesh.vertices;
+						adjVerts = left.prepMesh.vertices;
 						FixEdgeSeam(Orientation.East, left.quadsX, left.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, (int) lodDiff);
-						left.mesh.vertices = adjVerts;
-						left.MeshModified = true;
+						left.prepMesh.vertices = adjVerts;
+						left.MeshAltered = true;
 					}
+					MeshAltered = true;
 				}
-				left.mesh.normals = adjNormals;
+				left.prepMesh.normals = adjNormals;
 				UpdateFixedSeamIndicator(Orientation.West, true);
 			}
 
-			mesh.vertices = verts;
-			MeshModified = true;
-			mesh.normals = normals;
+			prepMesh.vertices = verts;		
+			prepMesh.normals = normals;
 		}
 
 		private void UpdateFixedSeamIndicator(Orientation side, bool state) {

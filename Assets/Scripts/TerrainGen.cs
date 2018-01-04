@@ -31,13 +31,11 @@ namespace ProcGen {
 		public int chunksX;
 		public int chunksZ;
 		public Vector2 chunkSize;
-		[Range(1, 250)]
-		public int chunkQuadsX;
-		[Range(1, 250)]
-		public int chunkQuadsZ;
 		[SerializeField]
 		private LODLevel[] lodLevels;
-		private Dictionary<Vector2i, Chunk> chunks = new Dictionary<Vector2i, Chunk>();
+		public bool useSceneViewCameraForLOD = true;
+		public Player player;
+		public Dictionary<Vector2i, Chunk> chunks = new Dictionary<Vector2i, Chunk>();
 
 		[Header("Noise")]
 		public NoiseType noiseType;
@@ -57,9 +55,27 @@ namespace ProcGen {
 		[Header("Water")]
 		public GameObject water;
 		public float waterLevel = .2f;
-		public float shore = .1f;
+
+		private GenerationThread genThread;
+		private bool _finalizeNeeded = false;
+		private object _finalizeNeededLock = new object();
+		private bool finalizeNeeded {
+			get {
+				lock (_finalizeNeededLock) {
+					return _finalizeNeeded;
+				}
+			}
+			set {
+				lock (_finalizeNeededLock) {
+					_finalizeNeeded = value;
+				}
+			}
+		}
 
 		private void Start() {
+			genThread = new GenerationThread();
+			genThread.Start();
+			genThread.Init(this, OnGenerationFinished);
 			if (randomSeed) {
 				seed = Random.Range(0, int.MaxValue);
 			}
@@ -72,6 +88,13 @@ namespace ProcGen {
 				regenerate = false;
 			}
 			TrackCamera();
+			if (finalizeNeeded) {
+				FinalizeChunks();
+			}
+		}
+
+		private void OnDestroy() {
+			genThread.Stop();
 		}
 
 		private void OnValidate() {
@@ -82,29 +105,46 @@ namespace ProcGen {
 
 		private Vector2i camChunkPos;
 		private void TrackCamera() {
-			if (SceneView.currentDrawingSceneView != null) {
-				Vector3 camPos = SceneView.currentDrawingSceneView.camera.transform.position;
+			if (useSceneViewCameraForLOD) {
+				if (SceneView.currentDrawingSceneView != null) {
+					Vector3 camPos = SceneView.currentDrawingSceneView.camera.transform.position;
+					Vector2i prevCamChunkPos = camChunkPos;
+					camChunkPos = new Vector2i((int) (camPos.x / chunkSize.x), (int) (camPos.z / chunkSize.y));
+					if (prevCamChunkPos != camChunkPos) {
+						StartLODUpdate();
+					}
+				}
+			} else {
+				Vector3 camPos = player.transform.position;
 				Vector2i prevCamChunkPos = camChunkPos;
 				camChunkPos = new Vector2i((int) (camPos.x / chunkSize.x), (int) (camPos.z / chunkSize.y));
 				if (prevCamChunkPos != camChunkPos) {
-					UpdateLOD();
+					StartLODUpdate();
 				}
 			}
 		}
 
-		private void UpdateLOD() {
-			// Generation Pass
-			foreach (Chunk chk in chunks.Values) {
-				int prevLODIndex = chk.lodIndex;
-				chk.lodIndex = GetLODIndexFromDistance((int) Vector2i.Distance(chk.ChunkPos, camChunkPos));
-				if (prevLODIndex != chk.lodIndex || chk.MeshModified) {
-					chk.Generate();
-				}
+		private void StartLODUpdate() {
+			if (!genThread.HasFinished) {
+				genThread.Cancel();
+				FinalizeChunks();
 			}
-			// Edge Seams Pass
+			genThread.Generate(GetChunksList());
+		}
+
+		private void OnGenerationFinished() {
+			finalizeNeeded = true;
+		}
+
+		private void FinalizeChunks() {
 			foreach (Chunk chk in chunks.Values) {
-				chk.FixEdgeSeams();
+				chk.Finalise();
 			}
+			finalizeNeeded = false;
+		}
+
+		public int GetLODIndex(Chunk chk) {
+			return GetLODIndexFromDistance((int) Vector2i.Distance(chk.ChunkPos, camChunkPos));
 		}
 
 		private int GetLODIndexFromDistance(int distance) {
@@ -131,7 +171,7 @@ namespace ProcGen {
 			UpdateWater();
 			ResetNoiseFunc();
 			//GenerateChunks();
-			UpdateLOD();
+			StartLODUpdate();
 		}
 
 		private void ResetNoiseFunc() {
@@ -148,15 +188,6 @@ namespace ProcGen {
 			}
 		}
 
-		private void GenerateChunks() {
-			foreach (Chunk chk in chunks.Values) {
-				chk.Generate();
-			}
-			foreach (Chunk chk in chunks.Values) {
-				chk.FixEdgeSeams();
-			}
-		}
-
 		private void UpdateWater() {
 			Vector2 center = new Vector2(chunkSize.x * chunksX, chunkSize.y * chunksZ) / 2f;
 			water.transform.position = new Vector3(center.x, waterLevel, center.y);
@@ -169,7 +200,7 @@ namespace ProcGen {
 			for (int z = 0; z < chunksZ; z++) {
 				for (int x = 0; x < chunksX; x++) {
 					Vector2i chkPos = new Vector2i(x, z);
-					chunks.Add(chkPos, Chunk.Create(this, chkPos, chunkSize, chunkQuadsX, chunkQuadsZ));
+					chunks.Add(chkPos, Chunk.Create(this, chkPos, chunkSize));
 				}
 			}
 		}
@@ -185,6 +216,14 @@ namespace ProcGen {
 			Chunk chk;
 			chunks.TryGetValue(pos, out chk);
 			return chk;
+		}
+
+		public List<Chunk> GetChunksList() {
+			List<Chunk> chks = new List<Chunk>();
+			foreach (Chunk chk in chunks.Values) {
+				chks.Add(chk);
+			}
+			return chks;
 		}
 
 	}
