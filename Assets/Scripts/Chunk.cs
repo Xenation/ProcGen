@@ -121,7 +121,7 @@ namespace ProcGen {
 				Debug.Log("Generating quadsX=" + quadsX + "quadsZ=" + quadsZ);
 			}
 			mesh.GeneratePlane(size, quadsX, quadsZ);
-			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, generator.offsetX, generator.offsetZ, generator.mountainessFrequency);
+			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, generator.offsetX, generator.offsetZ, generator.continentsFrequency);
 			meshCol.sharedMesh = mesh;
 			UpdateFixedSeamIndicator(Orientation.North, false);
 			UpdateFixedSeamIndicator(Orientation.East, false);
@@ -133,7 +133,8 @@ namespace ProcGen {
 			Vector3[] verts = mesh.vertices;
 			for (int vertIndex = 0; vertIndex < verts.Length; vertIndex++) {
 				float mountainess = Mathf.PerlinNoise((verts[vertIndex].x + transform.position.x) * mountFreq + offsetX, (verts[vertIndex].z + transform.position.z) * mountFreq + offsetZ);
-				verts[vertIndex].y = noise((verts[vertIndex].x + transform.position.x) * frequency + offsetX, (verts[vertIndex].z + transform.position.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude;
+				float ampModifier = generator.continentValueToAmplification.Evaluate(mountainess);
+				verts[vertIndex].y = noise((verts[vertIndex].x + transform.position.x) * frequency + offsetX, (verts[vertIndex].z + transform.position.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude * ampModifier;
 			}
 
 			mesh.vertices = verts;

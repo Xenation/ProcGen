@@ -30,7 +30,7 @@ namespace ProcGen {
 			octFreq *= lacunarity;
 			octAmp *= gain;
 			for (int i = 0; i < octaves - 1; i++) {
-				output += (Mathf.PerlinNoise(x * octFreq, y * octFreq) - .5f) * octAmp;
+				output += Mathf.PerlinNoise(x * octFreq, y * octFreq) * octAmp;
 				octFreq *= lacunarity;
 				octAmp *= gain;
 			}

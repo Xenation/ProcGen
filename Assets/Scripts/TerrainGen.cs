@@ -46,6 +46,8 @@ namespace ProcGen {
 		public int octaveCount = 8;
 		public float lacunarity = 1.841f;
 		public float gain = .5f;
+		public float continentsFrequency = .0025f;
+		public AnimationCurve continentValueToAmplification;
 		[HideInInspector]
 		public float offsetX;
 		[HideInInspector]
@@ -56,9 +58,6 @@ namespace ProcGen {
 		public GameObject water;
 		public float waterLevel = .2f;
 		public float shore = .1f;
-
-		[Header("Biomes")]
-		public float mountainessFrequency = .05f;
 
 		private void Start() {
 			if (randomSeed) {

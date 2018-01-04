@@ -293,29 +293,20 @@ MonoBehaviour:
   chunkQuadsX: 128
   chunkQuadsZ: 128
   lodLevels:
-  - quads: 128
-    distance: 0
   - quads: 64
-    distance: 2
-  - quads: 16
+    distance: 0
+  - quads: 32
     distance: 4
-  - quads: 8
-    distance: 6
-  - quads: 4
-    distance: 16
+  - quads: 16
+    distance: 20
   noiseType: 0
   frequency: 0.0075
   amplitude: 50
   octaveCount: 8
   lacunarity: 1.841
   gain: 0.5
-  offsetX: 0
-  offsetZ: 0
-  water: {fileID: 941039147}
-  waterLevel: 5
-  shore: 0
-  mountainessFrequency: 0.0025
-  mountainessToAmp:
+  continentsFrequency: 0.0025
+  continentValueToAmplification:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 2
@@ -357,6 +348,11 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
+  offsetX: 0
+  offsetZ: 0
+  water: {fileID: 941039147}
+  waterLevel: 5
+  shore: 0
 --- !u!1 &605477062
 GameObject:
   m_ObjectHideFlags: 0

@@ -72,10 +72,10 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _SandFade: 0.25
+    - _SandFade: 1
     - _SmoothnessTextureChannel: 0
-    - _SnowFade: 4
-    - _SnowLevel: 25
+    - _SnowFade: 20
+    - _SnowLevel: 60
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
