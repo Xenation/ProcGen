@@ -9,6 +9,16 @@ namespace ProcGen {
 		PerlinOneMinusAbs
 	}
 
+	[System.Serializable]
+	public class LODLevel {
+
+		[Tooltip("must be a power of 2")]
+		public int quads;
+		[Tooltip("distance in chunk grid positions")]
+		public int distance;
+
+	}
+
 	public class TerrainGen : MonoBehaviour {
 		
 		[Header("General")]
@@ -25,10 +35,10 @@ namespace ProcGen {
 		public int chunkQuadsX;
 		[Range(1, 250)]
 		public int chunkQuadsZ;
-		public int lodQuadsDivider = 2;
-		public int lodChunkDistance = 1;
-		public int maxLOD = 20;
+		[SerializeField]
+		private LODLevel[] lodLevels;
 		private Dictionary<Vector2i, Chunk> chunks = new Dictionary<Vector2i, Chunk>();
+		public GameObject debugGO;
 
 		[Header("Noise")]
 		public NoiseType noiseType;
@@ -87,12 +97,9 @@ namespace ProcGen {
 		private void UpdateLOD() {
 			// Generation Pass
 			foreach (Chunk chk in chunks.Values) {
-				int prevLOD = chk.lod;
-				chk.lod = (int) (Vector2i.Distance(chk.ChunkPos, camChunkPos) / lodChunkDistance);
-				if (chk.lod > maxLOD) {
-					chk.lod = maxLOD;
-				}
-				if (prevLOD != chk.lod) {
+				int prevLODIndex = chk.lodIndex;
+				chk.lodIndex = GetLODIndexFromDistance((int) Vector2i.Distance(chk.ChunkPos, camChunkPos));
+				if (prevLODIndex != chk.lodIndex || chk.MeshModified) {
 					chk.Generate();
 				}
 			}
@@ -100,6 +107,22 @@ namespace ProcGen {
 			foreach (Chunk chk in chunks.Values) {
 				chk.FixEdgeSeams();
 			}
+		}
+
+		private int GetLODIndexFromDistance(int distance) {
+			int curLODIndex = 0;
+			for (int i = 0; i < lodLevels.Length; i++) {
+				if (distance < lodLevels[i].distance) {
+					break;
+				}
+				curLODIndex = i;
+			}
+			return curLODIndex;
+		}
+
+		public LODLevel GetLODLevel(int index) {
+			if (index < 0) return lodLevels[lodLevels.Length - 1]; // TODO unsafe
+			return lodLevels[index];
 		}
 
 		private void Generate() {

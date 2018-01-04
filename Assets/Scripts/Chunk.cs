@@ -25,11 +25,12 @@ namespace ProcGen {
 		public int maxQuadsZ;
 		private int quadsX;
 		private int quadsZ;
-		public int lod = -1;
+		public int lodIndex = -1;
 		private MeshFilter filter;
 		private Mesh mesh;
 		private MeshCollider meshCol;
 		private MeshRenderer meshRenderer;
+		public bool MeshModified { get; private set; }
 
 		private TerrainGen generator;
 
@@ -114,8 +115,8 @@ namespace ProcGen {
 		}
 
 		public void Generate() {
-			quadsX = (lod == 0) ? maxQuadsX : maxQuadsX / (generator.lodQuadsDivider * lod) / 2 * 2;
-			quadsZ = (lod == 0) ? maxQuadsZ : maxQuadsZ / (generator.lodQuadsDivider * lod) / 2 * 2;
+			quadsX = generator.GetLODLevel(lodIndex).quads;
+			quadsZ = generator.GetLODLevel(lodIndex).quads;
 			if (quadsX == 0 || quadsZ == 0) {
 				Debug.Log("Generating quadsX=" + quadsX + "quadsZ=" + quadsZ);
 			}
@@ -138,6 +139,7 @@ namespace ProcGen {
 			mesh.vertices = verts;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
+			MeshModified = false;
 		}
 
 		public void FixEdgeSeams() { // TODO corner seams, change normals of adjacents and avoid adjacent to recalculate on top
@@ -152,75 +154,90 @@ namespace ProcGen {
 			if (front != null && !edgeSeamsFixed[Orientation.North]) {
 				//Debug.Log("EdgeSeam Front");
 				adjNormals = front.mesh.normals;
-				if (front.lod == lod) {
+				if (front.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.North, quadsX, quadsZ, normals, verts, front.quadsX, front.quadsZ, adjNormals, false, 0);
 				} else {
-					int lodDiff = lod - front.lod;
-					if (lodDiff < 0) {
-						lodDiff = -lodDiff;
-						FixEdgeSeam(Orientation.North, quadsX, quadsZ, normals, verts, front.quadsX, front.quadsZ, adjNormals, true, 2 * lodDiff);
+					float lodDiff = quadsX / (float) front.quadsX;
+					Debug.Log("lodDiff=" + lodDiff);
+					if (lodDiff >= 1f) {
+						FixEdgeSeam(Orientation.North, quadsX, quadsZ, normals, verts, front.quadsX, front.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {
+						lodDiff = 1f / lodDiff;
 						adjVerts = front.mesh.vertices;
-						FixEdgeSeam(Orientation.South, front.quadsX, front.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, 2 * lodDiff);
+						FixEdgeSeam(Orientation.South, front.quadsX, front.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, (int) lodDiff);
+						front.mesh.vertices = adjVerts;
+						front.MeshModified = true;
 					}
 				}
+				front.mesh.normals = adjNormals;
 				UpdateFixedSeamIndicator(Orientation.North, true);
 			}
 
 			// Back Edge
 			if (back != null && !edgeSeamsFixed[Orientation.South]) {
 				adjNormals = back.mesh.normals;
-				if (back.lod == lod) {
+				if (back.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.South, quadsX, quadsZ, normals, verts, back.quadsX, back.quadsZ, adjNormals, false, 0);
 				} else {
-					int lodDiff = lod - back.lod;
-					if (lodDiff < 0) {
-						lodDiff = -lodDiff;
-						FixEdgeSeam(Orientation.South, quadsX, quadsZ, normals, verts, back.quadsX, back.quadsZ, adjNormals, true, 2 * lodDiff);
+					float lodDiff = quadsX / (float) back.quadsX;
+					if (lodDiff >= 1f) {
+						FixEdgeSeam(Orientation.South, quadsX, quadsZ, normals, verts, back.quadsX, back.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {
+						lodDiff = 1f / lodDiff;
 						adjVerts = back.mesh.vertices;
-						FixEdgeSeam(Orientation.North, back.quadsX, back.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, 2 * lodDiff);
+						FixEdgeSeam(Orientation.North, back.quadsX, back.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, (int) lodDiff);
+						back.mesh.vertices = adjVerts;
+						back.MeshModified = true;
 					}
 				}
+				back.mesh.normals = adjNormals;
 				UpdateFixedSeamIndicator(Orientation.South, true);
 			}
 
 			// Right Edge
 			if (right != null && !edgeSeamsFixed[Orientation.East]) {
 				adjNormals = right.mesh.normals;
-				if (right.lod == lod) {
+				if (right.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.East, quadsX, quadsZ, normals, verts, right.quadsX, right.quadsZ, adjNormals, false, 0);
 				} else {
-					int lodDiff = lod - right.lod;
-					if (lodDiff < 0) {
-						lodDiff = -lodDiff;
-						FixEdgeSeam(Orientation.East, quadsX, quadsZ, normals, verts, right.quadsX, right.quadsZ, adjNormals, true, 2 * lodDiff);
+					float lodDiff = quadsX / (float) right.quadsX;
+					if (lodDiff >= 1f) {
+						FixEdgeSeam(Orientation.East, quadsX, quadsZ, normals, verts, right.quadsX, right.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {
+						lodDiff = 1f / lodDiff;
 						adjVerts = right.mesh.vertices;
-						FixEdgeSeam(Orientation.West, right.quadsX, right.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, 2 * lodDiff);
+						FixEdgeSeam(Orientation.West, right.quadsX, right.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, (int) lodDiff);
+						right.mesh.vertices = adjVerts;
+						right.MeshModified = true;
 					}
 				}
+				right.mesh.normals = adjNormals;
 				UpdateFixedSeamIndicator(Orientation.East, true);
 			}
 
 			// Left Edge
 			if (left != null && !edgeSeamsFixed[Orientation.West]) {
 				adjNormals = left.mesh.normals;
-				if (left.lod == lod) {
+				if (left.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.West, quadsX, quadsZ, normals, verts, left.quadsX, left.quadsZ, adjNormals, false, 0);
 				} else {
-					int lodDiff = lod - left.lod;
-					if (lodDiff < 0) {
-						lodDiff = -lodDiff;
-						FixEdgeSeam(Orientation.West, quadsX, quadsZ, normals, verts, left.quadsX, left.quadsZ, adjNormals, true, 2 * lodDiff);
+					float lodDiff = quadsX / (float) left.quadsX;
+					if (lodDiff >= 1f) {
+						FixEdgeSeam(Orientation.West, quadsX, quadsZ, normals, verts, left.quadsX, left.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {
+						lodDiff = 1f / lodDiff;
 						adjVerts = left.mesh.vertices;
-						FixEdgeSeam(Orientation.East, left.quadsX, left.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, 2 * lodDiff);
+						FixEdgeSeam(Orientation.East, left.quadsX, left.quadsZ, adjNormals, adjVerts, quadsX, quadsZ, normals, true, (int) lodDiff);
+						left.mesh.vertices = adjVerts;
+						left.MeshModified = true;
 					}
 				}
+				left.mesh.normals = adjNormals;
 				UpdateFixedSeamIndicator(Orientation.West, true);
 			}
 
+			mesh.vertices = verts;
+			MeshModified = true;
 			mesh.normals = normals;
 		}
 
@@ -256,7 +273,7 @@ namespace ProcGen {
 
 					case Orientation.West:
 						startIndexhr = 0;
-						startIndexlr = hrQuadsX;
+						startIndexlr = lrQuadsX;
 						break;
 				}
 				if (hrside == Orientation.North || hrside == Orientation.South) {
@@ -265,7 +282,9 @@ namespace ProcGen {
 						int midPointToNextLRPoint = lrTohrQuadsDivider - midPointIndex;
 						if (midPointIndex != 0) {
 							hrNormals[startIndexhr + i] = Vector3.Slerp(hrNormals[startIndexhr + i - midPointIndex], Vector3.Slerp(hrNormals[startIndexhr + i + midPointToNextLRPoint], lrNormals[startIndexlr + (i + midPointToNextLRPoint) / lrTohrQuadsDivider], .5f), 1f / lrTohrQuadsDivider);
-							hrVertices[startIndexhr + i].y = hrVertices[startIndexhr + i - midPointIndex].y + (hrVertices[startIndexhr + i + midPointToNextLRPoint].y - hrVertices[startIndexhr + i - midPointIndex].y) * (1f / midPointIndex);
+							//Debug.Log("base height = " + hrVertices[startIndexhr + i].y);
+							hrVertices[startIndexhr + i].y = hrVertices[startIndexhr + i - midPointIndex].y + (hrVertices[startIndexhr + i + midPointToNextLRPoint].y - hrVertices[startIndexhr + i - midPointIndex].y) * (midPointIndex / (float) lrTohrQuadsDivider);
+							//Debug.Log("new height = " + hrVertices[startIndexhr + i].y + " between " + hrVertices[startIndexhr + i - midPointIndex].y + " and " + hrVertices[startIndexhr + i + midPointToNextLRPoint].y);
 						} else {
 							hrNormals[startIndexhr + i] = Vector3.Slerp(hrNormals[startIndexhr + i], lrNormals[startIndexlr + i / lrTohrQuadsDivider], .5f);
 							lrNormals[startIndexlr + i / lrTohrQuadsDivider] = hrNormals[startIndexhr + i];
@@ -280,13 +299,13 @@ namespace ProcGen {
 						if (midPointIndex != 0) {
 							int prevLRPointInHR = startIndexhr + (i - midPointIndex) * (hrQuadsX + 1);
 							int nextLRPointInHR = startIndexhr + (i + midPointToNextLRPoint) * (hrQuadsX + 1);
-							int nextLRPointInLR = startIndexlr + (i / lrTohrQuadsDivider + 1) * (lrQuadsX + 1);
-							try {
+							int nextLRPointInLR = indexlr + (lrQuadsX + 1);
+							//try {
 							hrNormals[indexhr] = Vector3.Slerp(hrNormals[prevLRPointInHR], Vector3.Slerp(hrNormals[nextLRPointInHR], lrNormals[nextLRPointInLR], .5f), 1f / lrTohrQuadsDivider);
-							} catch (IndexOutOfRangeException) {
-								Debug.Log("i=" + i + " hrside=" + hrside.ToString() + " hrQuadsX=" + hrQuadsX + " hrQuadsZ=" + hrQuadsZ + " lrQuadsX=" + lrQuadsX + " lrQuadsZ=" + lrQuadsZ + " hrNormals.Length=" + hrNormals.Length + " lrNormals.Length=" + lrNormals.Length + " indexhr=" + indexhr + " indexlr=" + indexlr + " midPointIndex=" + midPointIndex + " midPointToNextLRPoint=" + midPointToNextLRPoint + " prevLRPointInHR=" + prevLRPointInHR + " nextLRPointInHR=" + nextLRPointInHR + " lrTohrQuadsDivider=" + lrTohrQuadsDivider + " nextLRPointInLR=" + nextLRPointInLR);
-							}
-							hrVertices[indexhr].y = hrVertices[prevLRPointInHR].y + (hrVertices[nextLRPointInHR].y - hrVertices[prevLRPointInHR].y) * (1f / midPointIndex);
+							//} catch (IndexOutOfRangeException) {
+							//	Debug.Log("i=" + i + " ilr=" + (i / lrTohrQuadsDivider) + " hrside=" + hrside.ToString() + " hrQuadsX=" + hrQuadsX + " hrQuadsZ=" + hrQuadsZ + " lrQuadsX=" + lrQuadsX + " lrQuadsZ=" + lrQuadsZ + " hrNormals.Length=" + hrNormals.Length + " lrNormals.Length=" + lrNormals.Length + " indexhr=" + indexhr + " indexlr=" + indexlr + " midPointIndex=" + midPointIndex + " midPointToNextLRPoint=" + midPointToNextLRPoint + " prevLRPointInHR=" + prevLRPointInHR + " nextLRPointInHR=" + nextLRPointInHR + " lrTohrQuadsDivider=" + lrTohrQuadsDivider + " nextLRPointInLR=" + nextLRPointInLR);
+							//}
+							hrVertices[indexhr].y = hrVertices[prevLRPointInHR].y + (hrVertices[nextLRPointInHR].y - hrVertices[prevLRPointInHR].y) * (midPointIndex / (float) lrTohrQuadsDivider);
 						} else {
 							hrNormals[indexhr] = Vector3.Slerp(hrNormals[indexhr], lrNormals[indexlr], .5f);
 							lrNormals[indexlr] = hrNormals[indexhr];
