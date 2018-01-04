@@ -35,6 +35,24 @@ namespace ProcGen {
 			return Mathf.Sqrt(Mathf.Pow(b.x - a.x, 2) + Mathf.Pow(b.y - a.y, 2));
 		}
 
+		public override bool Equals(object obj) {
+			if (!(obj is Vector2i)) {
+				return false;
+			}
+
+			var i = (Vector2i) obj;
+			return x == i.x &&
+				   y == i.y;
+		}
+
+		public override int GetHashCode() {
+			var hashCode = 1502939027;
+			hashCode = hashCode * -1521134295 + base.GetHashCode();
+			hashCode = hashCode * -1521134295 + x.GetHashCode();
+			hashCode = hashCode * -1521134295 + y.GetHashCode();
+			return hashCode;
+		}
+
 		public static Vector2i operator +(Vector2i v1, Vector2i v2) {
 			return new Vector2i(v1.x + v2.x, v1.y + v2.y);
 		}

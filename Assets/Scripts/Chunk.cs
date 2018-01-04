@@ -148,17 +148,13 @@ namespace ProcGen {
 			Vector3[] adjNormals;
 			Vector3[] adjVerts;
 
-			//Debug.Log("Fixing Edge Seams");
-
 			// Front Edge
 			if (front != null && !edgeSeamsFixed[Orientation.North]) {
-				//Debug.Log("EdgeSeam Front");
 				adjNormals = front.mesh.normals;
 				if (front.lodIndex == lodIndex) {
 					FixEdgeSeam(Orientation.North, quadsX, quadsZ, normals, verts, front.quadsX, front.quadsZ, adjNormals, false, 0);
 				} else {
 					float lodDiff = quadsX / (float) front.quadsX;
-					Debug.Log("lodDiff=" + lodDiff);
 					if (lodDiff >= 1f) {
 						FixEdgeSeam(Orientation.North, quadsX, quadsZ, normals, verts, front.quadsX, front.quadsZ, adjNormals, true, (int) lodDiff);
 					} else {

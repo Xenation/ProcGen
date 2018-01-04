@@ -38,7 +38,6 @@ namespace ProcGen {
 		[SerializeField]
 		private LODLevel[] lodLevels;
 		private Dictionary<Vector2i, Chunk> chunks = new Dictionary<Vector2i, Chunk>();
-		public GameObject debugGO;
 
 		[Header("Noise")]
 		public NoiseType noiseType;
