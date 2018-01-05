@@ -16,6 +16,7 @@ namespace ProcGen {
 		public int quads;
 		[Tooltip("distance in chunk grid positions")]
 		public int distance;
+		public bool genForest;
 
 	}
 
@@ -46,6 +47,11 @@ namespace ProcGen {
 		public float gain = .5f;
 		public float continentsFrequency = .0025f;
 		public AnimationCurve continentValueToAmplification;
+		public float forestsFrequency = .01f;
+		public float forestsThreashold = .5f;
+		public float forestsMaxAltitude = 40f;
+		public int treesPerChunk = 20;
+		public GameObject treePrefab;
 		[HideInInspector]
 		public float offsetX;
 		[HideInInspector]

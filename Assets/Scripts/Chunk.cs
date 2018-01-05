@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,6 +40,9 @@ namespace ProcGen {
 		private Dictionary<Orientation, bool> edgeSeamsFixed = new Dictionary<Orientation, bool>();
 		private Vector3 cachedPos;
 		public bool meshRegenerated;
+		private List<Vector3> treePositions = new List<Vector3>();
+		private bool treePositionsGenerated = false;
+		private bool treesSpawned = false;
 
 		public static Chunk Create(TerrainGen generator, Vector2i chunkPos, Vector2 size) {
 			GameObject go = new GameObject("Chunk");
@@ -113,14 +115,14 @@ namespace ProcGen {
 			}
 		}
 
-		public void Generate() {
+		public void Generate(float offsetX, float offsetZ) {
 			quadsX = generator.GetLODLevel(lodIndex).quads;
 			quadsZ = generator.GetLODLevel(lodIndex).quads;
 			if (quadsX == 0 || quadsZ == 0) {
 				Debug.Log("Generating quadsX=" + quadsX + "quadsZ=" + quadsZ);
 			}
 			prepMesh.GeneratePlane(size, quadsX, quadsZ);
-			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, generator.offsetX, generator.offsetZ, generator.continentsFrequency);
+			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, offsetX, offsetZ, generator.continentsFrequency);
 			UpdateFixedSeamIndicator(Orientation.North, false);
 			UpdateFixedSeamIndicator(Orientation.East, false);
 			UpdateFixedSeamIndicator(Orientation.South, false);
@@ -129,8 +131,12 @@ namespace ProcGen {
 
 		public void Finalise() {
 			prepMesh.Apply();
+			if (!treePositionsGenerated) {
+				GenerateForest(generator.forestsFrequency, generator.forestsThreashold, generator.offsetX, generator.offsetZ);
+			}
 			if (meshRegenerated) {
-				meshCol.sharedMesh = mesh;
+				//meshCol.sharedMesh = mesh;
+				RefreshTrees();
 			}
 		}
 
@@ -146,6 +152,42 @@ namespace ProcGen {
 			prepMesh.RecalculateNormals();
 			prepMesh.RecalculateBounds();
 			MeshAltered = false;
+		}
+
+		private float GetHeightAt(Vector3 pos) {
+			float mountainess = Mathf.PerlinNoise(pos.x * generator.continentsFrequency + generator.offsetX, pos.z * generator.continentsFrequency + generator.offsetZ);
+			float ampModifier = generator.continentValueToAmplification.Evaluate(mountainess);
+			return generator.noise(pos.x * generator.frequency + generator.offsetX, pos.z * generator.frequency + generator.offsetZ, generator.octaveCount, generator.lacunarity, generator.gain) * generator.amplitude * ampModifier;
+		}
+
+		private void GenerateForest(float forestFreq, float forestThr, float offsetX, float offsetZ) {
+			for (int i = 0; i < generator.treesPerChunk; i++) {
+				Vector3 treePos = new Vector3(Random.Range(cachedPos.x, cachedPos.x + size.x), 0f, Random.Range(cachedPos.z, cachedPos.z + size.y));
+				bool forest = (Mathf.PerlinNoise(treePos.x * generator.forestsFrequency + generator.offsetX, treePos.z * generator.forestsFrequency + generator.offsetZ) > generator.forestsThreashold);
+				if (forest) {
+					treePos.y = GetHeightAt(treePos);
+					if (treePos.y > generator.waterLevel && treePos.y < generator.forestsMaxAltitude) {
+						treePositions.Add(treePos);
+					}
+				}
+			}
+			treePositionsGenerated = true;
+		}
+
+		private void RefreshTrees() {
+			if (generator.GetLODLevel(lodIndex).genForest) {
+				if (!treesSpawned) {
+					for (int i = 0; i < treePositions.Count; i++) {
+						Instantiate(generator.treePrefab, treePositions[i], Quaternion.identity, transform);
+					}
+					treesSpawned = true;
+				}
+			} else {
+				for (int i = 0; i < transform.childCount; i++) {
+					Destroy(transform.GetChild(i).gameObject);
+				}
+				treesSpawned = false;
+			}
 		}
 
 		public void FixEdgeSeams() { // TODO corner seams, change normals of adjacents and avoid adjacent to recalculate on top

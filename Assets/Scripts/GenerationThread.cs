@@ -126,6 +126,8 @@ namespace ProcGen {
 					genRequest = false;
 					HasFinished = false;
 					chunks = nextChunks;
+					float offsetX = generator.offsetX;
+					float offsetZ = generator.offsetZ;
 					// Generation Pass
 					int generatedCount = 0;
 					foreach (Chunk chk in chunks) {
@@ -133,7 +135,7 @@ namespace ProcGen {
 						chk.lodIndex = generator.GetLODIndex(chk);
 						if (prevLODIndex != chk.lodIndex || chk.MeshAltered) {
 							chk.meshRegenerated = true;
-							chk.Generate();
+							chk.Generate(offsetX, offsetZ);
 							generatedCount++;
 						} else {
 							chk.meshRegenerated = false;

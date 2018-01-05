@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -287,16 +287,19 @@ MonoBehaviour:
   terrainMat: {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
   seed: 111
   randomSeed: 0
-  chunksX: 50
-  chunksZ: 50
-  chunkSize: {x: 50, y: 50}
+  chunksX: 25
+  chunksZ: 25
+  chunkSize: {x: 100, y: 100}
   lodLevels:
-  - quads: 64
+  - quads: 128
     distance: 0
+    genForest: 1
+  - quads: 64
+    distance: 2
+    genForest: 1
   - quads: 32
-    distance: 4
-  - quads: 16
-    distance: 20
+    distance: 10
+    genForest: 0
   useSceneViewCameraForLOD: 0
   player: {fileID: 775275284}
   noiseType: 0
@@ -348,11 +351,15 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
+  forestsFrequency: 0.01
+  forestsThreashold: 0.5
+  forestsMaxAltitude: 40
+  treesPerChunk: 200
+  treePrefab: {fileID: 1758955571943772, guid: 88933d9079a81d147bb4fb09c7a8c673, type: 2}
   offsetX: 0
   offsetZ: 0
   water: {fileID: 941039147}
   waterLevel: 5
-  shore: 0
 --- !u!1 &605477062
 GameObject:
   m_ObjectHideFlags: 0
