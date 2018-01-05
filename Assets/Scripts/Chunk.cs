@@ -135,7 +135,7 @@ namespace ProcGen {
 				GenerateForest(generator.forestsFrequency, generator.forestsThreashold, generator.offsetX, generator.offsetZ);
 			}
 			if (meshRegenerated) {
-				//meshCol.sharedMesh = mesh;
+				meshCol.sharedMesh = mesh;
 				RefreshTrees();
 			}
 		}

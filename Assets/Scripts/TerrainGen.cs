@@ -37,6 +37,7 @@ namespace ProcGen {
 		public bool useSceneViewCameraForLOD = true;
 		public Player player;
 		public Dictionary<Vector2i, Chunk> chunks = new Dictionary<Vector2i, Chunk>();
+		public int maxFinalizeFrameTime = 10;
 
 		[Header("Noise")]
 		public NoiseType noiseType;
@@ -77,6 +78,8 @@ namespace ProcGen {
 				}
 			}
 		}
+		private Coroutine finalizeRoutine;
+		private bool finalizeInProgress = false;
 
 		private void Start() {
 			genThread = new GenerationThread();
@@ -143,10 +146,26 @@ namespace ProcGen {
 		}
 
 		private void FinalizeChunks() {
+			if (finalizeInProgress) {
+				StopCoroutine(finalizeRoutine);
+			}
+			finalizeRoutine = StartCoroutine(FinalizeCoroutine());
+		}
+
+		private System.Collections.IEnumerator FinalizeCoroutine() {
+			finalizeInProgress = true;
+			finalizeNeeded = false;
+			System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+			sw.Start();
 			foreach (Chunk chk in chunks.Values) {
 				chk.Finalise();
+				if (sw.ElapsedMilliseconds > maxFinalizeFrameTime) {
+					sw.Reset();
+					yield return null;
+					sw.Start();
+				}
 			}
-			finalizeNeeded = false;
+			finalizeInProgress = false;
 		}
 
 		public int GetLODIndex(Chunk chk) {
