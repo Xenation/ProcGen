@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace ProcGen {
 	public enum NoiseType {
@@ -52,6 +53,7 @@ namespace ProcGen {
 		public float forestsThreashold = .5f;
 		public float forestsMaxAltitude = 40f;
 		public int treesPerChunk = 20;
+		public int treesPerContainer = 100;
 		public GameObject treePrefab;
 		public Material treeMaterial;
 		[HideInInspector]
@@ -64,6 +66,21 @@ namespace ProcGen {
 		public GameObject water;
 		public float waterLevel = .2f;
 		public float shoreHeight = 1f;
+
+		[Header("NavMesh")]
+		public float agentClimb = 3f;
+		public float agentHeight = 4f;
+		public float agentRadius = 5f;
+		public float agentSlope = 45f;
+		public float minRegionArea = 50f;
+		public float boundsMaxHeight = 200f;
+		public float boundsMinHeight = -50f;
+		private NavMeshBuildSettings buildSettings;
+		private NavMeshData navMeshData;
+		private Bounds navMeshBounds = new Bounds();
+		private AsyncOperationCallback navMeshOperation;
+		private int queriedNavMeshBuilds = 0;
+		private System.Diagnostics.Stopwatch navMeshWatch = new System.Diagnostics.Stopwatch();
 
 		private GenerationThread genThread;
 		private bool _finalizeNeeded = false;
@@ -90,6 +107,7 @@ namespace ProcGen {
 			if (randomSeed) {
 				seed = Random.Range(0, int.MaxValue);
 			}
+			InitNavMeshSettings();
 			Generate();
 		}
 
@@ -101,6 +119,9 @@ namespace ProcGen {
 			TrackCamera();
 			if (finalizeNeeded) {
 				FinalizeChunks();
+			}
+			if (navMeshOperation != null) {
+				navMeshOperation.UpdateStatus();
 			}
 		}
 
@@ -167,6 +188,7 @@ namespace ProcGen {
 					sw.Start();
 				}
 			}
+			StartNavMeshBuild();
 			finalizeInProgress = false;
 		}
 
@@ -197,8 +219,60 @@ namespace ProcGen {
 			offsetZ = Random.Range(-10000f, 10000f);
 			UpdateWater();
 			ResetNoiseFunc();
-			//GenerateChunks();
 			StartLODUpdate();
+		}
+
+		private void InitNavMeshSettings() {
+			navMeshData = new NavMeshData();
+			navMeshBounds.min = Vector3.zero + Vector3.up * boundsMinHeight;
+			navMeshBounds.max = new Vector3(chunksX * chunkSize.x, boundsMaxHeight, chunksZ * chunkSize.y);
+			buildSettings.agentClimb = agentClimb;
+			buildSettings.agentHeight = agentHeight;
+			buildSettings.agentRadius = agentRadius;
+			buildSettings.agentSlope = agentSlope;
+			buildSettings.minRegionArea = minRegionArea;
+			string[] report = buildSettings.ValidationReport(navMeshBounds);
+			Debug.Log("NavMesh Settings Report:");
+			foreach (string str in report) {
+				Debug.Log(str);
+			}
+		}
+
+		private void StartNavMeshBuild() {
+			queriedNavMeshBuilds++;
+			if (queriedNavMeshBuilds == 1) {
+				BuildNavMesh();
+			}
+		}
+
+		private void OnNavMeshBuildFinished() {
+			Debug.Log("Finished Building NavMesh in " + navMeshWatch.ElapsedMilliseconds + "ms");
+			navMeshWatch.Reset();
+			if (queriedNavMeshBuilds > 0) {
+				BuildNavMesh();
+			}
+		}
+
+		private void BuildNavMesh() {
+			queriedNavMeshBuilds--;
+			Debug.Log("Starting NavMesh build with:\nbounds: min=" + navMeshBounds.min + " max=" + navMeshBounds.max);
+			navMeshWatch.Start();
+			List<NavMeshBuildSource> sources = new List<NavMeshBuildSource>();
+			foreach (Chunk chk in chunks.Values) {
+				NavMeshBuildSource source = new NavMeshBuildSource();
+				source.shape = NavMeshBuildSourceShape.Mesh;
+				source.size = chk.Get3DSize();
+				source.sourceObject = chk.GetMesh();
+				source.transform = chk.transform.localToWorldMatrix;
+				source.area = 0;
+				sources.Add(source);
+			}
+			navMeshOperation = new AsyncOperationCallback(NavMeshBuilder.UpdateNavMeshDataAsync(navMeshData, buildSettings, sources, navMeshBounds));
+			navMeshOperation.callback += OnNavMeshBuildFinished;
+			if (navMeshData == null) {
+				Debug.Log("NavMeshBulding error");
+			}
+			NavMesh.AddNavMeshData(navMeshData);
 		}
 
 		private void ResetNoiseFunc() {

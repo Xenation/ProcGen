@@ -287,19 +287,13 @@ MonoBehaviour:
   terrainMat: {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
   seed: 1111
   randomSeed: 0
-  chunksX: 25
-  chunksZ: 25
-  chunkSize: {x: 100, y: 100}
+  chunksX: 10
+  chunksZ: 10
+  chunkSize: {x: 250, y: 250}
   lodLevels:
   - quads: 128
     distance: 0
     genForest: 1
-  - quads: 64
-    distance: 2
-    genForest: 1
-  - quads: 32
-    distance: 10
-    genForest: 0
   useSceneViewCameraForLOD: 0
   player: {fileID: 775275284}
   maxFinalizeFrameTime: 10
@@ -355,7 +349,8 @@ MonoBehaviour:
   forestsFrequency: 0.01
   forestsThreashold: 0.5
   forestsMaxAltitude: 40
-  treesPerChunk: 200
+  treesPerChunk: 2000
+  treesPerContainer: 150
   treePrefab: {fileID: 1555595867905642, guid: 80de3ea1421830944aeda6f987c10508, type: 2}
   treeMaterial: {fileID: 2100000, guid: a3e7b22dc8bbb2746ad8acf6a20ad5c4, type: 2}
   offsetX: 0

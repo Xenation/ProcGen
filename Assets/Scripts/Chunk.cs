@@ -43,8 +43,8 @@ namespace ProcGen {
 		private List<Vector3> treePositions = new List<Vector3>();
 		private bool treePositionsGenerated = false;
 		private bool treesSpawned = false;
-		private GameObject treesContainer;
-		private Mesh treesMesh;
+		private List<GameObject> treeContainers = new List<GameObject>();
+		private List<Mesh> treeMeshes = new List<Mesh>();
 
 		public static Chunk Create(TerrainGen generator, Vector2i chunkPos, Vector2 size) {
 			GameObject go = new GameObject("Chunk");
@@ -77,6 +77,14 @@ namespace ProcGen {
 
 		public Vector3 WorldPosition() {
 			return new Vector3(ChunkPos.x * size.x, 0f, ChunkPos.y * size.y);
+		}
+
+		public Vector3 Get3DSize() {
+			return mesh.bounds.size;
+		}
+
+		public Mesh GetMesh() {
+			return mesh;
 		}
 
 		public void UpdateAdjacents() {
@@ -179,26 +187,37 @@ namespace ProcGen {
 		private void RefreshTrees() {
 			if (generator.GetLODLevel(lodIndex).genForest) {
 				if (!treesSpawned) {
-					treesContainer = new GameObject("TreesContainer", typeof(MeshFilter), typeof(MeshRenderer));
-					treesContainer.transform.SetParent(transform, false);
-					treesMesh = treesContainer.GetComponent<MeshFilter>().mesh;
-					MeshFilter[] prefabMeshes = generator.treePrefab.GetComponentsInChildren<MeshFilter>();
-					CombineInstance[] prefabCombines = new CombineInstance[prefabMeshes.Length * treePositions.Count];
-					int combineIndex = 0;
-					for (int i = 0; i < treePositions.Count; i++) {
-						for (int meshIndex = 0; meshIndex < generator.treePrefab.transform.childCount; meshIndex++) {
-							prefabCombines[combineIndex].mesh = prefabMeshes[meshIndex].sharedMesh;
-							prefabCombines[combineIndex].transform = Matrix4x4.Translate(treePositions[i]) * prefabMeshes[meshIndex].transform.localToWorldMatrix;
-							combineIndex++;
+					for (int containerIndex = 0; containerIndex < treePositions.Count / generator.treesPerContainer; containerIndex++) {
+						GameObject treesContainer = new GameObject("TreesContainer" + containerIndex, typeof(MeshFilter), typeof(MeshRenderer));
+						treesContainer.transform.SetParent(transform, false);
+						treeContainers.Add(treesContainer);
+						Mesh treesMesh = treesContainer.GetComponent<MeshFilter>().mesh;
+						treeMeshes.Add(treesMesh);
+
+						MeshFilter[] prefabMeshes = generator.treePrefab.GetComponentsInChildren<MeshFilter>();
+						CombineInstance[] prefabCombines = new CombineInstance[prefabMeshes.Length * generator.treesPerContainer];
+
+						int combineIndex = 0;
+						int startPosIndex = containerIndex * generator.treesPerContainer;
+						for (int i = startPosIndex; i < startPosIndex + generator.treesPerContainer && i < treePositions.Count; i++) {
+							for (int meshIndex = 0; meshIndex < prefabMeshes.Length; meshIndex++) {
+								prefabCombines[combineIndex].mesh = prefabMeshes[meshIndex].sharedMesh;
+								prefabCombines[combineIndex].transform = Matrix4x4.Translate(treePositions[i]) * prefabMeshes[meshIndex].transform.localToWorldMatrix;
+								combineIndex++;
+							}
 						}
+
+						treesMesh.CombineMeshes(prefabCombines);
+						treesContainer.GetComponent<MeshRenderer>().material = generator.treeMaterial;
 					}
-					Debug.Log("Combining " + prefabCombines.Length + " meshes");
-					treesMesh.CombineMeshes(prefabCombines);
-					treesContainer.GetComponent<MeshRenderer>().material = generator.treeMaterial;
 					treesSpawned = true;
 				}
 			} else {
-				Destroy(treesContainer);
+				foreach (GameObject container in treeContainers) {
+					Destroy(container);
+				}
+				treeContainers.Clear();
+				treeMeshes.Clear();
 				treesSpawned = false;
 			}
 		}
