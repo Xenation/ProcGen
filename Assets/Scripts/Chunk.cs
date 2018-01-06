@@ -43,6 +43,8 @@ namespace ProcGen {
 		private List<Vector3> treePositions = new List<Vector3>();
 		private bool treePositionsGenerated = false;
 		private bool treesSpawned = false;
+		private GameObject treesContainer;
+		private Mesh treesMesh;
 
 		public static Chunk Create(TerrainGen generator, Vector2i chunkPos, Vector2 size) {
 			GameObject go = new GameObject("Chunk");
@@ -146,15 +148,6 @@ namespace ProcGen {
 				float mountainess = Mathf.PerlinNoise((verts[vertIndex].x + cachedPos.x) * continentsFreq + offsetX, (verts[vertIndex].z + cachedPos.z) * continentsFreq + offsetZ);
 				float ampModifier = continentToAmpCurve.Evaluate(mountainess);
 				verts[vertIndex].y = noise((verts[vertIndex].x + cachedPos.x) * frequency + offsetX, (verts[vertIndex].z + cachedPos.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude * ampModifier;
-				if (verts[vertIndex].y > 120f) {
-					float height = verts[vertIndex].y;
-					Debug.Log("Unsually high vertex");
-					mountainess = Mathf.PerlinNoise((verts[vertIndex].x + cachedPos.x) * continentsFreq + offsetX, (verts[vertIndex].z + cachedPos.z) * continentsFreq + offsetZ);
-					ampModifier = continentToAmpCurve.Evaluate(mountainess);
-					verts[vertIndex].y = noise((verts[vertIndex].x + cachedPos.x) * frequency + offsetX, (verts[vertIndex].z + cachedPos.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude * ampModifier;
-					height = verts[vertIndex].y;
-					Debug.Log("Applied recalculation");
-				}
 			}
 
 			prepMesh.vertices = verts;
@@ -171,11 +164,11 @@ namespace ProcGen {
 
 		private void GenerateForest(float forestFreq, float forestThr, float offsetX, float offsetZ) {
 			for (int i = 0; i < generator.treesPerChunk; i++) {
-				Vector3 treePos = new Vector3(Random.Range(cachedPos.x, cachedPos.x + size.x), 0f, Random.Range(cachedPos.z, cachedPos.z + size.y));
-				bool forest = (Mathf.PerlinNoise(treePos.x * generator.forestsFrequency + generator.offsetX, treePos.z * generator.forestsFrequency + generator.offsetZ) > generator.forestsThreashold);
+				Vector3 treePos = new Vector3(Random.Range(0, size.x), 0f, Random.Range(0, size.y));
+				bool forest = (Mathf.PerlinNoise((cachedPos.x + treePos.x) * generator.forestsFrequency + generator.offsetX, (cachedPos.z + treePos.z) * generator.forestsFrequency + generator.offsetZ) > generator.forestsThreashold);
 				if (forest) {
-					treePos.y = GetHeightAt(treePos);
-					if (treePos.y > generator.waterLevel && treePos.y < generator.forestsMaxAltitude) {
+					treePos.y = GetHeightAt(cachedPos + treePos);
+					if (treePos.y > generator.waterLevel + generator.shoreHeight && treePos.y < generator.forestsMaxAltitude) {
 						treePositions.Add(treePos);
 					}
 				}
@@ -186,15 +179,26 @@ namespace ProcGen {
 		private void RefreshTrees() {
 			if (generator.GetLODLevel(lodIndex).genForest) {
 				if (!treesSpawned) {
+					treesContainer = new GameObject("TreesContainer", typeof(MeshFilter), typeof(MeshRenderer));
+					treesContainer.transform.SetParent(transform, false);
+					treesMesh = treesContainer.GetComponent<MeshFilter>().mesh;
+					MeshFilter[] prefabMeshes = generator.treePrefab.GetComponentsInChildren<MeshFilter>();
+					CombineInstance[] prefabCombines = new CombineInstance[prefabMeshes.Length * treePositions.Count];
+					int combineIndex = 0;
 					for (int i = 0; i < treePositions.Count; i++) {
-						Instantiate(generator.treePrefab, treePositions[i], Quaternion.identity, transform);
+						for (int meshIndex = 0; meshIndex < generator.treePrefab.transform.childCount; meshIndex++) {
+							prefabCombines[combineIndex].mesh = prefabMeshes[meshIndex].sharedMesh;
+							prefabCombines[combineIndex].transform = Matrix4x4.Translate(treePositions[i]) * prefabMeshes[meshIndex].transform.localToWorldMatrix;
+							combineIndex++;
+						}
 					}
+					Debug.Log("Combining " + prefabCombines.Length + " meshes");
+					treesMesh.CombineMeshes(prefabCombines);
+					treesContainer.GetComponent<MeshRenderer>().material = generator.treeMaterial;
 					treesSpawned = true;
 				}
 			} else {
-				for (int i = 0; i < transform.childCount; i++) {
-					Destroy(transform.GetChild(i).gameObject);
-				}
+				Destroy(treesContainer);
 				treesSpawned = false;
 			}
 		}

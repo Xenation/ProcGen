@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -285,7 +285,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrainMat: {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
-  seed: 111
+  seed: 1111
   randomSeed: 0
   chunksX: 25
   chunksZ: 25
@@ -302,13 +302,14 @@ MonoBehaviour:
     genForest: 0
   useSceneViewCameraForLOD: 0
   player: {fileID: 775275284}
+  maxFinalizeFrameTime: 10
   noiseType: 0
   frequency: 0.0075
   amplitude: 50
   octaveCount: 8
   lacunarity: 1.841
   gain: 0.5
-  continentsFrequency: 0.0025
+  continentsFrequency: 0.001
   continentValueToAmplification:
     serializedVersion: 2
     m_Curve:
@@ -355,11 +356,13 @@ MonoBehaviour:
   forestsThreashold: 0.5
   forestsMaxAltitude: 40
   treesPerChunk: 200
-  treePrefab: {fileID: 1758955571943772, guid: 88933d9079a81d147bb4fb09c7a8c673, type: 2}
+  treePrefab: {fileID: 1555595867905642, guid: 80de3ea1421830944aeda6f987c10508, type: 2}
+  treeMaterial: {fileID: 2100000, guid: a3e7b22dc8bbb2746ad8acf6a20ad5c4, type: 2}
   offsetX: 0
   offsetZ: 0
   water: {fileID: 941039147}
   waterLevel: 5
+  shoreHeight: 1
 --- !u!1 &605477062
 GameObject:
   m_ObjectHideFlags: 0

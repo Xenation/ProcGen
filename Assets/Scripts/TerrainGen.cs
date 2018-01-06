@@ -53,6 +53,7 @@ namespace ProcGen {
 		public float forestsMaxAltitude = 40f;
 		public int treesPerChunk = 20;
 		public GameObject treePrefab;
+		public Material treeMaterial;
 		[HideInInspector]
 		public float offsetX;
 		[HideInInspector]
@@ -62,6 +63,7 @@ namespace ProcGen {
 		[Header("Water")]
 		public GameObject water;
 		public float waterLevel = .2f;
+		public float shoreHeight = 1f;
 
 		private GenerationThread genThread;
 		private bool _finalizeNeeded = false;
@@ -218,6 +220,7 @@ namespace ProcGen {
 			water.transform.position = new Vector3(center.x, waterLevel, center.y);
 			water.transform.localScale = new Vector3(chunkSize.x * chunksX / 10f, 1f, chunkSize.y * chunksZ / 10f);
 			terrainMat.SetFloat("_WaterLevel", waterLevel);
+			terrainMat.SetFloat("_SandFade", shoreHeight);
 		}
 
 		private void InitChunks() {
