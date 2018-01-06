@@ -5,7 +5,7 @@ namespace ProcGen {
 
 		public float speed;
 		public float sprintMultiplier;
-		public float jumpSpeed;
+		public float jetpackForce;
 		public float lookSpeed;
 
 		private Camera cam;
@@ -13,6 +13,7 @@ namespace ProcGen {
 		
 		private bool mouseLock = false;
 		private Vector3 vel;
+		private float vertVel;
 
 		private void Awake() {
 			rb = GetComponent<Rigidbody>();
@@ -29,8 +30,8 @@ namespace ProcGen {
 			}
 			vel = transform.rotation * Vector3.forward * vel.z + transform.rotation * Vector3.right * vel.x;
 
-			if (Input.GetButtonDown("Jump")) {
-				rb.AddForce(Vector3.up * jumpSpeed, ForceMode.VelocityChange);
+			if (Input.GetButton("Jump")) {
+				rb.AddForce(Vector3.up * jetpackForce, ForceMode.Acceleration);
 				//vel.y = jumpSpeed;
 			} else {
 				//vel.y = 0f;
@@ -56,8 +57,8 @@ namespace ProcGen {
 		}
 
 		private void FixedUpdate() {
-			vel.y = rb.velocity.y;
-			rb.velocity = vel;
+			vertVel = rb.velocity.y;
+			rb.velocity = vel + Vector3.up * vertVel;
 		}
 
 	}

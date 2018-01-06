@@ -75,6 +75,10 @@ namespace ProcGen {
 		public float minRegionArea = 50f;
 		public float boundsMaxHeight = 200f;
 		public float boundsMinHeight = -50f;
+		public bool overrideVoxelSize = false;
+		public float voxelSize = 0f;
+		public bool overrideTileSize = false;
+		public int tileSize = 0;
 		private NavMeshBuildSettings buildSettings;
 		private NavMeshData navMeshData;
 		private Bounds navMeshBounds = new Bounds();
@@ -231,11 +235,17 @@ namespace ProcGen {
 			buildSettings.agentRadius = agentRadius;
 			buildSettings.agentSlope = agentSlope;
 			buildSettings.minRegionArea = minRegionArea;
+			buildSettings.overrideVoxelSize = overrideVoxelSize;
+			buildSettings.voxelSize = voxelSize;
+			buildSettings.overrideTileSize = overrideTileSize;
+			buildSettings.tileSize = tileSize;
 			string[] report = buildSettings.ValidationReport(navMeshBounds);
 			Debug.Log("NavMesh Settings Report:");
 			foreach (string str in report) {
 				Debug.Log(str);
 			}
+			Debug.Log("Voxel size: " + buildSettings.voxelSize);
+			Debug.Log("Tile size: " + buildSettings.tileSize);
 		}
 
 		private void StartNavMeshBuild() {
@@ -259,13 +269,7 @@ namespace ProcGen {
 			navMeshWatch.Start();
 			List<NavMeshBuildSource> sources = new List<NavMeshBuildSource>();
 			foreach (Chunk chk in chunks.Values) {
-				NavMeshBuildSource source = new NavMeshBuildSource();
-				source.shape = NavMeshBuildSourceShape.Mesh;
-				source.size = chk.Get3DSize();
-				source.sourceObject = chk.GetMesh();
-				source.transform = chk.transform.localToWorldMatrix;
-				source.area = 0;
-				sources.Add(source);
+				sources.Add(CreateNavMeshBuildSource(chk.Get3DSize(), chk.GetMesh(), chk.transform.localToWorldMatrix, NavMesh.GetAreaFromName("Walkable")));
 			}
 			navMeshOperation = new AsyncOperationCallback(NavMeshBuilder.UpdateNavMeshDataAsync(navMeshData, buildSettings, sources, navMeshBounds));
 			navMeshOperation.callback += OnNavMeshBuildFinished;
@@ -273,6 +277,16 @@ namespace ProcGen {
 				Debug.Log("NavMeshBulding error");
 			}
 			NavMesh.AddNavMeshData(navMeshData);
+		}
+
+		private NavMeshBuildSource CreateNavMeshBuildSource(Vector3 size, Mesh mesh, Matrix4x4 transf, int area) {
+			NavMeshBuildSource source = new NavMeshBuildSource();
+			source.shape = NavMeshBuildSourceShape.Mesh;
+			source.size = size;
+			source.sourceObject = mesh;
+			source.transform = transf;
+			source.area = 0;
+			return source;
 		}
 
 		private void ResetNoiseFunc() {

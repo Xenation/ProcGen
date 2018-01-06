@@ -178,29 +178,27 @@ MonoBehaviour:
   m_GameObject: {fileID: 188794944}
   m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5bb6285e867bf4246a9a3d416c69c47b, type: 3}
+  m_Script: {fileID: 11500000, guid: 14b6809597a7c5f45a1364bd39723100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   filter: {fileID: 0}
   meshCol: {fileID: 0}
-  size: {x: 200, y: 200}
-  divX: 200
-  divY: 200
-  terrainMat: {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
-  seed: 111
-  randomSeed: 0
-  perlinScale: 0.05
-  perlinPower: 5
-  perlinAmplitude: 50
+  size: {x: 0, y: 0}
+  divX: 0
+  divY: 0
+  terrainMat: {fileID: 0}
+  seed: 0
+  randomSeed: 1
+  perlinScale: 0.5
+  perlinPower: 3
+  perlinAmplitude: 2
   perlinOctaves: 1
-  buildingPrefab: {fileID: 1373286501096326, guid: 4fcd9962671617c4da44903d8027fa73,
-    type: 2}
-  townPrefab: {fileID: 114402103051264492, guid: 20b68862355746842a30bef35e7e146a,
-    type: 2}
-  nbTowns: 30
+  buildingPrefab: {fileID: 0}
+  townPrefab: {fileID: 0}
+  nbTowns: 10
   minTownRadius: 2.5
   maxTownRadius: 15
-  water: {fileID: 941039147}
+  water: {fileID: 0}
   waterLevel: 0.2
   shore: 0.1
   centerRoadsCount: 4
@@ -281,93 +279,49 @@ MonoBehaviour:
   m_GameObject: {fileID: 188794944}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9981c9411830b744fa0bc708d110dc05, type: 3}
+  m_Script: {fileID: 11500000, guid: 1503e62dc88d10b4cace10b476c7b023, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainMat: {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
-  seed: 1111
+  terrainMat: {fileID: 0}
+  seed: 111
   randomSeed: 0
-  chunksX: 25
-  chunksZ: 25
-  chunkSize: {x: 100, y: 100}
-  lodLevels:
-  - quads: 128
-    distance: 0
-    genForest: 1
-  - quads: 64
-    distance: 2
-    genForest: 1
-  - quads: 32
-    distance: 10
-    genForest: 0
-  useSceneViewCameraForLOD: 0
+  chunksX: 0
+  chunksZ: 0
+  chunkSize: {x: 0, y: 0}
+  lodLevels: []
+  useSceneViewCameraForLOD: 1
   player: {fileID: 775275284}
   maxFinalizeFrameTime: 10
   noiseType: 0
-  frequency: 0.0075
+  frequency: 0.05
   amplitude: 50
   octaveCount: 8
   lacunarity: 1.841
   gain: 0.5
-  continentsFrequency: 0.001
+  continentsFrequency: 0.0025
   continentValueToAmplification:
     serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 2
-      time: 0
-      value: -0.5
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-    - serializedVersion: 2
-      time: 0.31859925
-      value: -0.05545059
-      inSlope: 4.617302
-      outSlope: 1.8305645
-      tangentMode: 1
-    - serializedVersion: 2
-      time: 0.44810188
-      value: 0.054371346
-      inSlope: 1.8961728
-      outSlope: 1.8961728
-      tangentMode: 1
-    - serializedVersion: 2
-      time: 0.68597263
-      value: 0.57416475
-      inSlope: 0.7748604
-      outSlope: 0.7748604
-      tangentMode: 1
-    - serializedVersion: 2
-      time: 0.9207033
-      value: 1.4580541
-      inSlope: 6.1923265
-      outSlope: 6.1923265
-      tangentMode: 1
-    - serializedVersion: 2
-      time: 1
-      value: 3
-      inSlope: 7.25534
-      outSlope: 7.25534
-      tangentMode: 0
+    m_Curve: []
     m_PreInfinity: 2
     m_PostInfinity: 2
-    m_RotationOrder: 0
+    m_RotationOrder: 4
   forestsFrequency: 0.01
   forestsThreashold: 0.5
   forestsMaxAltitude: 40
-  treesPerChunk: 200
-  treePrefab: {fileID: 1555595867905642, guid: 80de3ea1421830944aeda6f987c10508, type: 2}
-  treeMaterial: {fileID: 2100000, guid: a3e7b22dc8bbb2746ad8acf6a20ad5c4, type: 2}
+  treesPerChunk: 20
+  treesPerContainer: 100
+  treePrefab: {fileID: 0}
+  treeMaterial: {fileID: 0}
   offsetX: 0
   offsetZ: 0
-  water: {fileID: 941039147}
-  waterLevel: 5
+  water: {fileID: 0}
+  waterLevel: 0.2
   shoreHeight: 1
   agentClimb: 3
   agentHeight: 4
-  agentRadius: 4
+  agentRadius: 5
   agentSlope: 45
-  minRegionArea: 1000
+  minRegionArea: 50
   boundsMaxHeight: 200
   boundsMinHeight: -50
 --- !u!1 &605477062
@@ -623,7 +577,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 10
   sprintMultiplier: 3
-  jumpSpeed: 10
+  jetpackForce: 0
   lookSpeed: 7
 --- !u!54 &775275285
 Rigidbody:
