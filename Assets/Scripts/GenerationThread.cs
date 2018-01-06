@@ -113,6 +113,8 @@ namespace ProcGen {
 			}
 		}
 
+		private AnimationCurve continentToAmpCurve;
+
 		private Thread thread;
 
 		public GenerationThread() {
@@ -135,7 +137,7 @@ namespace ProcGen {
 						chk.lodIndex = generator.GetLODIndex(chk);
 						if (prevLODIndex != chk.lodIndex || chk.MeshAltered) {
 							chk.meshRegenerated = true;
-							chk.Generate(offsetX, offsetZ);
+							chk.Generate(offsetX, offsetZ, continentToAmpCurve);
 							generatedCount++;
 						} else {
 							chk.meshRegenerated = false;
@@ -174,9 +176,10 @@ namespace ProcGen {
 			stop = true;
 		}
 
-		public void Init(TerrainGen gen, FinishCallback fc) {
+		public void Init(TerrainGen gen, FinishCallback fc, AnimationCurve contToAmp) {
 			generator = gen;
 			callback = fc;
+			continentToAmpCurve = new AnimationCurve(contToAmp.keys);
 		}
 
 		public void Generate(List<Chunk> chks) {

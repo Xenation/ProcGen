@@ -84,7 +84,7 @@ namespace ProcGen {
 		private void Start() {
 			genThread = new GenerationThread();
 			genThread.Start();
-			genThread.Init(this, OnGenerationFinished);
+			genThread.Init(this, OnGenerationFinished, continentValueToAmplification);
 			if (randomSeed) {
 				seed = Random.Range(0, int.MaxValue);
 			}

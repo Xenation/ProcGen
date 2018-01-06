@@ -115,14 +115,14 @@ namespace ProcGen {
 			}
 		}
 
-		public void Generate(float offsetX, float offsetZ) {
+		public void Generate(float offsetX, float offsetZ, AnimationCurve continentToAmpCurve) {
 			quadsX = generator.GetLODLevel(lodIndex).quads;
 			quadsZ = generator.GetLODLevel(lodIndex).quads;
 			if (quadsX == 0 || quadsZ == 0) {
 				Debug.Log("Generating quadsX=" + quadsX + "quadsZ=" + quadsZ);
 			}
 			prepMesh.GeneratePlane(size, quadsX, quadsZ);
-			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, offsetX, offsetZ, generator.continentsFrequency);
+			GenerateTerrain(generator.noise, generator.frequency, generator.amplitude, generator.octaveCount, generator.lacunarity, generator.gain, offsetX, offsetZ, generator.continentsFrequency, continentToAmpCurve);
 			UpdateFixedSeamIndicator(Orientation.North, false);
 			UpdateFixedSeamIndicator(Orientation.East, false);
 			UpdateFixedSeamIndicator(Orientation.South, false);
@@ -140,12 +140,21 @@ namespace ProcGen {
 			}
 		}
 
-		private void GenerateTerrain(MathUtils.NoiseFunction noise, float frequency, float amplitude, int octaveCount, float lacunarity, float gain, float offsetX, float offsetZ, float mountFreq) {
+		private void GenerateTerrain(MathUtils.NoiseFunction noise, float frequency, float amplitude, int octaveCount, float lacunarity, float gain, float offsetX, float offsetZ, float continentsFreq, AnimationCurve continentToAmpCurve) {
 			Vector3[] verts = prepMesh.vertices;
 			for (int vertIndex = 0; vertIndex < verts.Length; vertIndex++) {
-				float mountainess = Mathf.PerlinNoise((verts[vertIndex].x + cachedPos.x) * mountFreq + offsetX, (verts[vertIndex].z + cachedPos.z) * mountFreq + offsetZ);
-				float ampModifier = generator.continentValueToAmplification.Evaluate(mountainess);
+				float mountainess = Mathf.PerlinNoise((verts[vertIndex].x + cachedPos.x) * continentsFreq + offsetX, (verts[vertIndex].z + cachedPos.z) * continentsFreq + offsetZ);
+				float ampModifier = continentToAmpCurve.Evaluate(mountainess);
 				verts[vertIndex].y = noise((verts[vertIndex].x + cachedPos.x) * frequency + offsetX, (verts[vertIndex].z + cachedPos.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude * ampModifier;
+				if (verts[vertIndex].y > 120f) {
+					float height = verts[vertIndex].y;
+					Debug.Log("Unsually high vertex");
+					mountainess = Mathf.PerlinNoise((verts[vertIndex].x + cachedPos.x) * continentsFreq + offsetX, (verts[vertIndex].z + cachedPos.z) * continentsFreq + offsetZ);
+					ampModifier = continentToAmpCurve.Evaluate(mountainess);
+					verts[vertIndex].y = noise((verts[vertIndex].x + cachedPos.x) * frequency + offsetX, (verts[vertIndex].z + cachedPos.z) * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude * ampModifier;
+					height = verts[vertIndex].y;
+					Debug.Log("Applied recalculation");
+				}
 			}
 
 			prepMesh.vertices = verts;
