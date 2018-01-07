@@ -158,11 +158,8 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 188794947}
-  - component: {fileID: 188794946}
-  - component: {fileID: 188794948}
-  - component: {fileID: 188794949}
-  - component: {fileID: 188794945}
   - component: {fileID: 188794950}
+  - component: {fileID: 188794945}
   m_Layer: 8
   m_Name: Terrain
   m_TagString: Untagged
@@ -176,44 +173,19 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 188794944}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14b6809597a7c5f45a1364bd39723100, type: 3}
+  m_Script: {fileID: 11500000, guid: 3edc31d137853bd4ea2fe2f9bae2032d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  filter: {fileID: 0}
-  meshCol: {fileID: 0}
-  size: {x: 200, y: 200}
-  divX: 200
-  divY: 200
-  terrainMat: {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
-  seed: 111
-  randomSeed: 0
-  perlinScale: 0.05
-  perlinPower: 5
-  perlinAmplitude: 50
-  perlinOctaves: 1
-  buildingPrefab: {fileID: 1373286501096326, guid: 4fcd9962671617c4da44903d8027fa73,
-    type: 2}
-  townPrefab: {fileID: 114402103051264492, guid: 20b68862355746842a30bef35e7e146a,
-    type: 2}
-  nbTowns: 30
-  minTownRadius: 2.5
-  maxTownRadius: 15
-  water: {fileID: 941039147}
-  waterLevel: 0.2
-  shore: 0.1
-  centerRoadsCount: 4
-  minRoadsLength: 1
-  maxRoadsLength: 5
-  centerRoadsWidth: 0.3
---- !u!33 &188794946
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 188794944}
-  m_Mesh: {fileID: 0}
+  townDensity: 50
+  townSlopeThreashold: 0.9
+  maxTownLinkDistance: 1000
+  maxTownLinkCount: 3
+  highwayWidth: 3
+  highwaySubdivDistance: 1
+  townDebug: {fileID: 1340826420891936, guid: 0bee2aa7c6131684c9d6f0aac2846aba, type: 2}
+  terrainGen: {fileID: 0}
 --- !u!4 &188794947
 Transform:
   m_ObjectHideFlags: 0
@@ -227,52 +199,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &188794948
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 188794944}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_Materials:
-  - {fileID: 2100000, guid: b124cb1d875dd9b48bc2594f70d6fc9b, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
---- !u!64 &188794949
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 188794944}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Convex: 0
-  m_InflateMesh: 0
-  m_SkinWidth: 0.01
-  m_Mesh: {fileID: 0}
 --- !u!114 &188794950
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -358,10 +284,10 @@ MonoBehaviour:
   water: {fileID: 941039147}
   waterLevel: 5
   shoreHeight: 1
-  agentClimb: 3
+  agentClimb: 1
   agentHeight: 4
   agentRadius: 2
-  agentSlope: 45
+  agentSlope: 35
   minRegionArea: 1000
   boundsMaxHeight: 200
   boundsMinHeight: -50
@@ -446,6 +372,7 @@ GameObject:
   - component: {fileID: 638535293}
   - component: {fileID: 638535292}
   - component: {fileID: 638535291}
+  - component: {fileID: 638535296}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -523,6 +450,17 @@ Transform:
   m_Father: {fileID: 775275283}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &638535296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 638535290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3519752e290dd8a4e9617964658db640, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &775275279
 GameObject:
   m_ObjectHideFlags: 0
@@ -671,7 +609,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: f234b4df2ac09244bb8465420a6f8548, type: 2}
+  - {fileID: 2100000, guid: 85da4ddd37eca1d489cfaa87e8bd26c2, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

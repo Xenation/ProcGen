@@ -66,6 +66,7 @@ namespace ProcGen {
 		public GameObject water;
 		public float waterLevel = .2f;
 		public float shoreHeight = 1f;
+		private NavMeshObstacle waterObstacle;
 
 		[Header("NavMesh")]
 		public float agentClimb = 3f;
@@ -104,6 +105,9 @@ namespace ProcGen {
 		private Coroutine finalizeRoutine;
 		private bool finalizeInProgress = false;
 
+		public delegate void TerrainGenComplete();
+		public event TerrainGenComplete OnTerrainGenCompleteEvent;
+
 		private void Start() {
 			genThread = new GenerationThread();
 			genThread.Start();
@@ -111,8 +115,8 @@ namespace ProcGen {
 			if (randomSeed) {
 				seed = Random.Range(0, int.MaxValue);
 			}
+			waterObstacle = water.GetComponent<NavMeshObstacle>();
 			InitNavMeshSettings();
-			Generate();
 		}
 
 		private void Update() {
@@ -145,7 +149,7 @@ namespace ProcGen {
 				if (SceneView.currentDrawingSceneView != null) {
 					Vector3 camPos = SceneView.currentDrawingSceneView.camera.transform.position;
 					Vector2i prevCamChunkPos = camChunkPos;
-					camChunkPos = new Vector2i((int) (camPos.x / chunkSize.x), (int) (camPos.z / chunkSize.y));
+					camChunkPos = GetChunkPos(camPos);
 					if (prevCamChunkPos != camChunkPos) {
 						StartLODUpdate();
 					}
@@ -153,7 +157,7 @@ namespace ProcGen {
 			} else {
 				Vector3 camPos = player.transform.position;
 				Vector2i prevCamChunkPos = camChunkPos;
-				camChunkPos = new Vector2i((int) (camPos.x / chunkSize.x), (int) (camPos.z / chunkSize.y));
+				camChunkPos = GetChunkPos(camPos);
 				if (prevCamChunkPos != camChunkPos) {
 					StartLODUpdate();
 				}
@@ -260,6 +264,10 @@ namespace ProcGen {
 			navMeshWatch.Reset();
 			if (queriedNavMeshBuilds > 0) {
 				BuildNavMesh();
+			} else {
+				if (OnTerrainGenCompleteEvent != null) {
+					OnTerrainGenCompleteEvent.Invoke();
+				}
 			}
 		}
 
@@ -307,6 +315,8 @@ namespace ProcGen {
 			Vector2 center = new Vector2(chunkSize.x * chunksX, chunkSize.y * chunksZ) / 2f;
 			water.transform.position = new Vector3(center.x, waterLevel, center.y);
 			water.transform.localScale = new Vector3(chunkSize.x * chunksX / 10f, 1f, chunkSize.y * chunksZ / 10f);
+			waterObstacle.center = new Vector3(0f, -20f, 0f);
+			waterObstacle.size = new Vector3(10f, 40f + shoreHeight * 2f, 10f);
 			terrainMat.SetFloat("_WaterLevel", waterLevel);
 			terrainMat.SetFloat("_SandFade", shoreHeight);
 		}
@@ -340,6 +350,31 @@ namespace ProcGen {
 				chks.Add(chk);
 			}
 			return chks;
+		}
+
+		public Vector2i GetChunkPos(Vector3 pos) {
+			return new Vector2i((int) (pos.x / chunkSize.x), (int) (pos.z / chunkSize.y));
+		}
+
+		public bool Raycast(Ray ray, out RaycastHit hit, float distance) {
+			foreach (Chunk chk in chunks.Values) {
+				if (chk.Raycast(ray, out hit, distance)) {
+					return true;
+				}
+			}
+			hit = new RaycastHit();
+			return false;
+		}
+
+		public bool DownRaycast(Vector3 pos, out RaycastHit hit) {
+			Chunk chk = GetChunkAt(GetChunkPos(pos));
+			return chk.Raycast(new Ray(new Vector3(pos.x, 200f, pos.z), Vector3.down), out hit, 300f);
+		}
+
+		public float GetHeightAt(Vector3 pos) {
+			float mountainess = Mathf.PerlinNoise(pos.x * continentsFrequency + offsetX, pos.z * continentsFrequency + offsetZ);
+			float ampModifier = continentValueToAmplification.Evaluate(mountainess);
+			return noise(pos.x * frequency + offsetX, pos.z * frequency + offsetZ, octaveCount, lacunarity, gain) * amplitude * ampModifier;
 		}
 
 	}

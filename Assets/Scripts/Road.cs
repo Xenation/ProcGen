@@ -1,10 +1,15 @@
 ﻿using UnityEngine;
+using UnityEngine.AI;
 
 namespace ProcGen {
 	[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 	public class Road : MonoBehaviour {
 
 		public static Road CreateNew(Transform parent, Junction j1, Junction j2, float width) {
+			return CreateNew(parent, j1, j2, width, false, 1f, null);
+		}
+
+		public static Road CreateNew(Transform parent, Junction j1, Junction j2, float width, bool followGround, float subdivDistance, TerrainGen terrain) {
 			GameObject go = new GameObject();
 			go.name = "Road";
 			go.transform.SetParent(parent, false);
@@ -13,8 +18,19 @@ namespace ProcGen {
 			road.Junction2 = j2;
 			road.width = width;
 			road.ComputePositioning();
+			road.subdivs = 2;
+			if (followGround) {
+				road.subdivs = GetSubdivisions(Vector3.Distance(j1.transform.position, j2.transform.position), subdivDistance);
+			}
 			road.GenerateMesh();
+			if (followGround) {
+				road.FollowGround(terrain);
+			}
 			return road;
+		}
+
+		private static int GetSubdivisions(float distance, float minSubdivDistance) {
+			return Mathf.CeilToInt(distance / minSubdivDistance);
 		}
 
 		public static bool Intersection(Road road1, Road road2, out Vector3 intersect) {
@@ -29,6 +45,7 @@ namespace ProcGen {
 
 		public float width;
 		public float length;
+		private int subdivs;
 
 		private Junction _junc1;
 		public Junction Junction1 {
@@ -94,7 +111,18 @@ namespace ProcGen {
 		}
 
 		private void GenerateMesh() {
-			mesh.GeneratePlane(new Vector2(length, width), 2, 1, true, true);
+			mesh.GeneratePlane(new Vector2(length, width), subdivs, 1, true, true);
+		}
+
+		private void FollowGround(TerrainGen terrain) {
+			transform.position = new Vector3(transform.position.x, 0f, transform.position.z);
+			Vector3[] verts = mesh.vertices;
+			for (int i = 0; i < verts.Length; i++) {
+				verts[i].y = terrain.GetHeightAt(transform.localToWorldMatrix.MultiplyPoint(verts[i])) + .2f;
+			}
+			mesh.vertices = verts;
+			mesh.RecalculateNormals();
+			mesh.RecalculateBounds();
 		}
 
 		public Road Split(Vector3 splitPoint) {

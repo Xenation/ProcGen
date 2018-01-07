@@ -164,18 +164,12 @@ namespace ProcGen {
 			MeshAltered = false;
 		}
 
-		private float GetHeightAt(Vector3 pos) {
-			float mountainess = Mathf.PerlinNoise(pos.x * generator.continentsFrequency + generator.offsetX, pos.z * generator.continentsFrequency + generator.offsetZ);
-			float ampModifier = generator.continentValueToAmplification.Evaluate(mountainess);
-			return generator.noise(pos.x * generator.frequency + generator.offsetX, pos.z * generator.frequency + generator.offsetZ, generator.octaveCount, generator.lacunarity, generator.gain) * generator.amplitude * ampModifier;
-		}
-
 		private void GenerateForest(float forestFreq, float forestThr, float offsetX, float offsetZ) {
 			for (int i = 0; i < generator.treesPerChunk; i++) {
 				Vector3 treePos = new Vector3(Random.Range(0, size.x), 0f, Random.Range(0, size.y));
 				bool forest = (Mathf.PerlinNoise((cachedPos.x + treePos.x) * generator.forestsFrequency + generator.offsetX, (cachedPos.z + treePos.z) * generator.forestsFrequency + generator.offsetZ) > generator.forestsThreashold);
 				if (forest) {
-					treePos.y = GetHeightAt(cachedPos + treePos);
+					treePos.y = generator.GetHeightAt(cachedPos + treePos);
 					if (treePos.y > generator.waterLevel + generator.shoreHeight && treePos.y < generator.forestsMaxAltitude) {
 						treePositions.Add(treePos);
 					}
@@ -431,6 +425,10 @@ namespace ProcGen {
 				}
 				
 			}
+		}
+
+		public bool Raycast(Ray ray, out RaycastHit hit, float distance) {
+			return meshCol.Raycast(ray, out hit, distance);
 		}
 
 	}

@@ -33,6 +33,11 @@ namespace ProcGen {
 			meshRenderer.material = MaterialsManager.I.junctionsMat;
 		}
 
+		public void CreateRoadTo(Junction junc, float width, bool followGround, float subdivDistance, TerrainGen terrain) {
+			Road road = Road.CreateNew(transform.parent, this, junc, width, followGround, subdivDistance, terrain);
+			roads.Add(road);
+		}
+
 		public void NotifyUnlink() {
 			if (roads.Count == 0) {
 				Destroy(gameObject);
