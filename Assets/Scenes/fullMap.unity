@@ -181,11 +181,55 @@ MonoBehaviour:
   townDensity: 50
   townSlopeThreashold: 0.9
   maxTownLinkDistance: 1000
-  maxTownLinkCount: 3
-  highwayWidth: 3
-  highwaySubdivDistance: 1
   townDebug: {fileID: 1340826420891936, guid: 0bee2aa7c6131684c9d6f0aac2846aba, type: 2}
+  maxTownLinkCount: 3
+  highwayWidth: 4
+  highwaySubdivDistance: 1
+  townMinRadius: 25
+  townMaxRadius: 70
+  treesDistance: 10
+  baseBuilding: {fileID: 1062023592387338, guid: b4b22a63bcfbb7a4998f91b652334c4b,
+    type: 2}
+  buildingSpacing: 7
+  buildingSlopeThreashold: 0.9
+  buildingHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 0.1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - serializedVersion: 2
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  heightMultiplierFromRadius:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 4
+      inSlope: 53.300003
+      outSlope: 53.300003
+      tangentMode: 0
+    - serializedVersion: 2
+      time: 1
+      value: 30
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
   terrainGen: {fileID: 0}
+  towns: []
 --- !u!4 &188794947
 Transform:
   m_ObjectHideFlags: 0
@@ -295,6 +339,7 @@ MonoBehaviour:
   voxelSize: 0.5
   overrideTileSize: 1
   tileSize: 50
+  townGen: {fileID: 0}
 --- !u!1 &605477062
 GameObject:
   m_ObjectHideFlags: 0

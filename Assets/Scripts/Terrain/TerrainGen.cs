@@ -88,6 +88,8 @@ namespace ProcGen {
 		private System.Diagnostics.Stopwatch navMeshWatch = new System.Diagnostics.Stopwatch();
 
 		private GenerationThread genThread;
+
+		// Finalize Coroutine
 		private bool _finalizeNeeded = false;
 		private object _finalizeNeededLock = new object();
 		private bool finalizeNeeded {
@@ -105,6 +107,13 @@ namespace ProcGen {
 		private Coroutine finalizeRoutine;
 		private bool finalizeInProgress = false;
 
+		// Trees Gen Coroutine
+		private bool genTreesNeeded = false;
+		private Coroutine genTreesRoutine;
+		private bool genTreesInProgress = false;
+
+		public TownGen townGen;
+
 		public delegate void TerrainGenComplete();
 		public event TerrainGenComplete OnTerrainGenCompleteEvent;
 
@@ -115,6 +124,7 @@ namespace ProcGen {
 			if (randomSeed) {
 				seed = Random.Range(0, int.MaxValue);
 			}
+			townGen.OnTownGenerationCompleteEvent += OnTownGenerationComplete;
 			waterObstacle = water.GetComponent<NavMeshObstacle>();
 			InitNavMeshSettings();
 		}
@@ -130,6 +140,9 @@ namespace ProcGen {
 			}
 			if (navMeshOperation != null) {
 				navMeshOperation.UpdateStatus();
+			}
+			if (genTreesNeeded) {
+				GenerateTrees();
 			}
 		}
 
@@ -198,6 +211,33 @@ namespace ProcGen {
 			}
 			StartNavMeshBuild();
 			finalizeInProgress = false;
+		}
+
+		private void OnTownGenerationComplete() {
+			genTreesNeeded = true;
+		}
+		
+		private void GenerateTrees() {
+			if (genTreesInProgress) {
+				StopCoroutine(genTreesRoutine);
+			}
+			genTreesRoutine = StartCoroutine(GenerateTreesCoroutine());
+		}
+
+		private System.Collections.IEnumerator GenerateTreesCoroutine() {
+			genTreesInProgress = true;
+			genTreesNeeded = false;
+			System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+			sw.Start();
+			foreach (Chunk chk in chunks.Values) {
+				chk.GenerateTrees(townGen.towns);
+				if (sw.ElapsedMilliseconds > maxFinalizeFrameTime) {
+					sw.Reset();
+					yield return null;
+					sw.Start();
+				}
+			}
+			genTreesInProgress = false;
 		}
 
 		public int GetLODIndex(Chunk chk) {
@@ -367,7 +407,9 @@ namespace ProcGen {
 		}
 
 		public bool DownRaycast(Vector3 pos, out RaycastHit hit) {
+			hit = new RaycastHit();
 			Chunk chk = GetChunkAt(GetChunkPos(pos));
+			if (chk == null) return false;
 			return chk.Raycast(new Ray(new Vector3(pos.x, 200f, pos.z), Vector3.down), out hit, 300f);
 		}
 

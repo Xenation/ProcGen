@@ -141,12 +141,11 @@ namespace ProcGen {
 
 		public void Finalise() {
 			prepMesh.Apply();
-			if (!treePositionsGenerated) {
-				GenerateForest(generator.forestsFrequency, generator.forestsThreashold, generator.offsetX, generator.offsetZ);
-			}
 			if (meshRegenerated) {
 				meshCol.sharedMesh = mesh;
-				RefreshTrees();
+				if (treePositionsGenerated) {
+					RefreshTrees();
+				}
 			}
 		}
 
@@ -164,10 +163,25 @@ namespace ProcGen {
 			MeshAltered = false;
 		}
 
-		private void GenerateForest(float forestFreq, float forestThr, float offsetX, float offsetZ) {
+		public void GenerateTrees(List<Townv2> towns) {
+			if (!treePositionsGenerated) {
+				GenerateForest(generator.forestsFrequency, generator.forestsThreashold, generator.offsetX, generator.offsetZ, towns);
+			}
+			RefreshTrees();
+		}
+
+		private void GenerateForest(float forestFreq, float forestThr, float offsetX, float offsetZ, List<Townv2> towns) {
 			for (int i = 0; i < generator.treesPerChunk; i++) {
 				Vector3 treePos = new Vector3(Random.Range(0, size.x), 0f, Random.Range(0, size.y));
 				bool forest = (Mathf.PerlinNoise((cachedPos.x + treePos.x) * generator.forestsFrequency + generator.offsetX, (cachedPos.z + treePos.z) * generator.forestsFrequency + generator.offsetZ) > generator.forestsThreashold);
+				if (forest) {
+					foreach (Townv2 town in towns) {
+						if (Vector3.Distance(treePos, town.transform.position - cachedPos) < town.radius + generator.townGen.treesDistance) {
+							forest = false;
+							break;
+						}
+					}
+				}
 				if (forest) {
 					treePos.y = generator.GetHeightAt(cachedPos + treePos);
 					if (treePos.y > generator.waterLevel + generator.shoreHeight && treePos.y < generator.forestsMaxAltitude) {

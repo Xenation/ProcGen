@@ -19,6 +19,10 @@ namespace ProcGen {
 		private TownGen generator;
 
 		private List<TownLink> links = new List<TownLink>();
+
+		public float radius;
+		private GameObject buildingContainer;
+		private List<Building> buildings = new List<Building>();
 		
 		private void Init(TownGen gen) {
 			generator = gen;
@@ -52,7 +56,6 @@ namespace ProcGen {
 		}
 
 		private void TrimLinks() {
-			Debug.Log("Trimming Link with max=" + generator.maxTownLinkCount + " and count=" + links.Count);
 			if (links.Count < generator.maxTownLinkCount) return;
 			float[] minDistances = new float[generator.maxTownLinkCount];
 			for (int i = 0; i < minDistances.Length; i++) {
@@ -62,7 +65,6 @@ namespace ProcGen {
 			for (int i = 0; i < indexes.Length; i++) {
 				indexes[i] = -1;
 			}
-			Debug.Log("Trimming ...");
 			for (int lnkIndex = 0; lnkIndex < links.Count; lnkIndex++) {
 				TownLink lnk = links[lnkIndex];
 				float dist = lnk.PathDistance;
@@ -78,18 +80,6 @@ namespace ProcGen {
 					}
 				}
 			}
-			Debug.Log("Distances Array:");
-			string str = "";
-			for (int i = 0; i < minDistances.Length; i++) {
-				str += minDistances[i] + ", ";
-			}
-			Debug.Log(str);
-			Debug.Log("Indexes Array:");
-			str = "";
-			for (int i = 0; i < indexes.Length; i++) {
-				str += indexes[i] + ", ";
-			}
-			Debug.Log(str);
 			for (int lnkIndex = 0; lnkIndex < links.Count; lnkIndex++) { // Unlink further away links
 				bool keep = false;
 				for (int i = 0; i < indexes.Length; i++) {
@@ -115,6 +105,34 @@ namespace ProcGen {
 			foreach (TownLink lnk in links) {
 				if (lnk.RoadCreated) continue; // Already created -> skip
 				lnk.CreateHighway(generator.highwayWidth, generator.highwaySubdivDistance, generator.terrainGen);
+			}
+		}
+
+		public void GenerateTown() {
+			InitBuildingStats();
+			GenerateSimpleTown();
+		}
+
+		private void InitBuildingStats() {
+			radius = Random.Range(generator.townMinRadius, generator.townMaxRadius);
+			buildingContainer = new GameObject("Buildings");
+			buildingContainer.transform.SetParent(transform);
+		}
+
+		private void GenerateSimpleTown() {
+			int maxBuildingsRow = Mathf.CeilToInt(radius / generator.buildingSpacing);
+			for (int y = 0; y < maxBuildingsRow; y++) {
+				for (int x = 0; x < maxBuildingsRow; x++) {
+					Vector3 buildingPos = transform.position + new Vector3((x / (float) maxBuildingsRow) * (radius * 2) - radius, 0f, (y / (float) maxBuildingsRow) * (radius * 2) - radius);
+					RaycastHit hit;
+					if (generator.terrainGen.DownRaycast(buildingPos, out hit) && hit.point.y > generator.terrainGen.waterLevel + generator.terrainGen.shoreHeight && Vector3.Dot(Vector3.up, hit.normal) > generator.buildingSlopeThreashold) {
+						buildingPos.y = hit.point.y;
+						float distance = Vector2.Distance(new Vector2(transform.position.x, transform.position.z), new Vector2(buildingPos.x, buildingPos.z));
+						if (distance > radius) continue;
+						float buildingHeight = generator.buildingHeightCurve.Evaluate(1f - distance / radius) * generator.heightMultiplierFromRadius.Evaluate((radius - generator.townMinRadius) / generator.townMaxRadius) * Random.Range(.75f, 1.25f);
+						buildings.Add(Building.CreateNew(buildingContainer.transform, generator.baseBuilding, buildingPos, buildingHeight));
+					}
+				}
 			}
 		}
 
