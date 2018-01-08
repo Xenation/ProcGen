@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEditor;
 
 namespace ProcGen {
+	/// <summary>
+	/// Old, First Terrain Generator
+	/// </summary>
 	public class BasicTerrainGen : MonoBehaviour {
 
 		[Header("Mesh")]

@@ -2,6 +2,9 @@
 using UnityEngine;
 
 namespace ProcGen {
+	/// <summary>
+	/// Old Town Class
+	/// </summary>
 	public class Town : MonoBehaviour {
 
 		public float radius;
