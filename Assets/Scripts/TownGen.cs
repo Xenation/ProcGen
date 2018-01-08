@@ -101,10 +101,15 @@ namespace ProcGen {
 		}
 
 		private void DeleteUnlinkedTowns() {
+			List<Townv2> destroyed = new List<Townv2>();
 			foreach (Townv2 town in towns) {
 				if (!town.HasLinks()) {
 					Destroy(town.gameObject);
+					destroyed.Add(town);
 				}
+			}
+			foreach (Townv2 town in destroyed) {
+				towns.Remove(town);
 			}
 		}
 
